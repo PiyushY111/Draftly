@@ -44,6 +44,7 @@ export const VoiceTalk = () => {
 
     // Create RTCPeerConnection for a peer
     const createPC = (otherConnectionId: number) => {
+        console.log(`[VoiceTalk] Creating peer connection for connectionId: ${otherConnectionId}`);
         if (pcsRef.current[otherConnectionId]) {
             pcsRef.current[otherConnectionId].close();
         }
@@ -64,23 +65,35 @@ export const VoiceTalk = () => {
             ],
         });
 
+        pc.onconnectionstatechange = () => {
+            console.log(`[VoiceTalk] Peer ${otherConnectionId} ConnectionState: ${pc.connectionState}`);
+        };
+
+        pc.oniceconnectionstatechange = () => {
+            console.log(`[VoiceTalk] Peer ${otherConnectionId} ICE ConnectionState: ${pc.iceConnectionState}`);
+        };
+
         pcsRef.current[otherConnectionId] = pc;
 
         // Add local tracks to peer connection
         if (localStreamRef.current) {
+            console.log(`[VoiceTalk] Adding local tracks to peer: ${otherConnectionId}`);
             localStreamRef.current.getTracks().forEach((track) => {
                 pc.addTrack(track, localStreamRef.current!);
             });
+        } else {
+            console.warn(`[VoiceTalk] No local stream found to share with peer: ${otherConnectionId}`);
         }
 
         // Send local ICE candidates to peer
         pc.onicecandidate = (e) => {
             if (e.candidate) {
+                console.log(`[VoiceTalk] Local ICE candidate generated for peer ${otherConnectionId}:`, e.candidate.candidate);
                 broadcast({
                     type: "webrtc-ice-candidate",
                     from: myConnectionId,
                     to: otherConnectionId,
-                    candidate: e.candidate,
+                    candidate: e.candidate.toJSON(),
                 });
             }
         };
@@ -88,6 +101,7 @@ export const VoiceTalk = () => {
         // Capture remote stream
         pc.ontrack = (e) => {
             const remoteStream = e.streams[0];
+            console.log(`[VoiceTalk] Received remote stream track from peer: ${otherConnectionId}`, remoteStream);
             if (remoteStream) {
                 setRemoteStreams((prev) => ({
                     ...prev,
@@ -101,17 +115,19 @@ export const VoiceTalk = () => {
 
     const processQueue = async (fromId: number, pc: RTCPeerConnection) => {
         const queue = iceQueuesRef.current[fromId] || [];
+        console.log(`[VoiceTalk] Draining ${queue.length} queued ICE candidates for peer: ${fromId}`);
         for (const candidate of queue) {
             try {
                 await pc.addIceCandidate(new RTCIceCandidate(candidate));
             } catch (e) {
-                // Silently discard duplicate candidate applications
+                console.error(`[VoiceTalk] Error applying queued candidate for peer ${fromId}:`, e);
             }
         }
         iceQueuesRef.current[fromId] = [];
     };
 
     const handleOffer = async (fromId: number, sdp: RTCSessionDescriptionInit) => {
+        console.log(`[VoiceTalk] Handling SDP Offer from peer: ${fromId}`);
         const pc = pcsRef.current[fromId] || createPC(fromId);
         await pc.setRemoteDescription(new RTCSessionDescription(sdp));
         
@@ -121,6 +137,7 @@ export const VoiceTalk = () => {
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         
+        console.log(`[VoiceTalk] Sending SDP Answer to peer: ${fromId}`);
         broadcast({
             type: "webrtc-answer",
             from: myConnectionId,
@@ -130,11 +147,14 @@ export const VoiceTalk = () => {
     };
 
     const handleAnswer = async (fromId: number, sdp: RTCSessionDescriptionInit) => {
+        console.log(`[VoiceTalk] Handling SDP Answer from peer: ${fromId}`);
         const pc = pcsRef.current[fromId];
         if (pc) {
             await pc.setRemoteDescription(new RTCSessionDescription(sdp));
             // Process any queued candidates after remote description is set
             await processQueue(fromId, pc);
+        } else {
+            console.error(`[VoiceTalk] Received answer for missing peer connection: ${fromId}`);
         }
     };
 
@@ -142,11 +162,13 @@ export const VoiceTalk = () => {
         const pc = pcsRef.current[fromId];
         if (pc && pc.remoteDescription) {
             try {
+                console.log(`[VoiceTalk] Directly applying remote ICE candidate from peer: ${fromId}`);
                 await pc.addIceCandidate(new RTCIceCandidate(candidate));
             } catch (e) {
-                // Silently discard duplicate candidate applications
+                console.error(`[VoiceTalk] Error applying ICE candidate from peer ${fromId}:`, e);
             }
         } else {
+            console.log(`[VoiceTalk] Queuing remote ICE candidate from peer: ${fromId}`);
             // Remote description not set yet, queue the candidate
             if (!iceQueuesRef.current[fromId]) {
                 iceQueuesRef.current[fromId] = [];
