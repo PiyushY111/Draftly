@@ -19,6 +19,7 @@ const AudioPlayer = ({ stream }: { stream: MediaStream }) => {
     useEffect(() => {
         if (audioRef.current) {
             audioRef.current.srcObject = stream;
+            audioRef.current.play().catch(() => {});
         }
     }, [stream]);
 
@@ -38,6 +39,7 @@ export const VoiceTalk = () => {
     const myConnectionId = me.connectionId;
 
     const pcsRef = useRef<Record<number, RTCPeerConnection>>({});
+    const iceQueuesRef = useRef<Record<number, RTCIceCandidateInit[]>>({});
     const localStreamRef = useRef<MediaStream | null>(null);
 
     // Create RTCPeerConnection for a peer
@@ -45,9 +47,21 @@ export const VoiceTalk = () => {
         if (pcsRef.current[otherConnectionId]) {
             pcsRef.current[otherConnectionId].close();
         }
+        
+        iceQueuesRef.current[otherConnectionId] = [];
 
         const pc = new RTCPeerConnection({
-            iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+            iceServers: [
+                {
+                    urls: [
+                        "stun:stun.l.google.com:19302",
+                        "stun:stun1.l.google.com:19302",
+                        "stun:stun2.l.google.com:19302",
+                        "stun:stun3.l.google.com:19302",
+                        "stun:stun4.l.google.com:19302",
+                    ],
+                },
+            ],
         });
 
         pcsRef.current[otherConnectionId] = pc;
@@ -85,9 +99,25 @@ export const VoiceTalk = () => {
         return pc;
     };
 
+    const processQueue = async (fromId: number, pc: RTCPeerConnection) => {
+        const queue = iceQueuesRef.current[fromId] || [];
+        for (const candidate of queue) {
+            try {
+                await pc.addIceCandidate(new RTCIceCandidate(candidate));
+            } catch (e) {
+                // Silently discard duplicate candidate applications
+            }
+        }
+        iceQueuesRef.current[fromId] = [];
+    };
+
     const handleOffer = async (fromId: number, sdp: RTCSessionDescriptionInit) => {
         const pc = pcsRef.current[fromId] || createPC(fromId);
         await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+        
+        // Process any queued candidates after remote description is set
+        await processQueue(fromId, pc);
+
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         
@@ -103,17 +133,25 @@ export const VoiceTalk = () => {
         const pc = pcsRef.current[fromId];
         if (pc) {
             await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+            // Process any queued candidates after remote description is set
+            await processQueue(fromId, pc);
         }
     };
 
     const handleIceCandidate = async (fromId: number, candidate: RTCIceCandidateInit) => {
         const pc = pcsRef.current[fromId];
-        if (pc) {
+        if (pc && pc.remoteDescription) {
             try {
                 await pc.addIceCandidate(new RTCIceCandidate(candidate));
             } catch (e) {
-                // Handle duplicate candidate edge cases silently
+                // Silently discard duplicate candidate applications
             }
+        } else {
+            // Remote description not set yet, queue the candidate
+            if (!iceQueuesRef.current[fromId]) {
+                iceQueuesRef.current[fromId] = [];
+            }
+            iceQueuesRef.current[fromId].push(candidate);
         }
     };
 
@@ -169,6 +207,7 @@ export const VoiceTalk = () => {
             if (!activeIds.has(id)) {
                 pcsRef.current[id]?.close();
                 delete pcsRef.current[id];
+                delete iceQueuesRef.current[id];
                 setRemoteStreams((prev) => {
                     const copy = { ...prev };
                     delete copy[id];
@@ -229,6 +268,7 @@ export const VoiceTalk = () => {
     const leaveVoice = () => {
         Object.values(pcsRef.current).forEach((pc) => pc.close());
         pcsRef.current = {};
+        iceQueuesRef.current = {};
         setRemoteStreams({});
 
         if (localStreamRef.current) {
