@@ -17,7 +17,6 @@ import {
 import { handleError } from "@/lib/utils";
 import { RenameDialog } from "@/modules/home/components/rename-dialog";
 import { AvatarStack } from "@/modules/room/components/avatar-stack";
-import { Inbox } from "@/modules/room/components/inbox";
 import { useEditorStore } from "@/providers/editor-store-provider";
 import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
 import { useConvexMutation } from "@convex-dev/react-query";
@@ -442,7 +441,6 @@ export const Navbar = ({ id, title, onToggleRevisions }: Props) => {
                     </Button>
                     <VoiceTalk />
                     <AvatarStack />
-                    <Inbox />
                     <OrganizationSwitcher
                         hideSlug
                         afterCreateOrganizationUrl="/"
