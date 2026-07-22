@@ -2,7 +2,7 @@ import { Dashboard } from "@/modules/home/components/dashboard";
 import { Navbar } from "@/modules/home/components/navbar";
 import { HomeLiveblocksProvider } from "@/providers/home-liveblocks-provider";
 import { auth } from "@clerk/nextjs/server";
-import { SignIn } from "@clerk/nextjs";
+import { ClientSignIn } from "@/modules/home/components/client-signin";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +12,7 @@ export default async function HomePage() {
     if (!userId) {
         return (
             <div className="flex min-h-screen flex-col items-center justify-center bg-[#fafbfd]">
-                <SignIn routing="hash" />
+                <ClientSignIn />
             </div>
         );
     }
