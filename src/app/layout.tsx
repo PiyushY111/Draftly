@@ -16,8 +16,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-    title: "Google Docs Clone",
+    title: "Draftly",
     description: "A clone of Google Docs built with Next.js",
+    icons: {
+        icon: "/logo.svg",
+    },
 };
 
 export default function RootLayout({

@@ -29,9 +29,13 @@ import { Threads } from "@/modules/room/components/threads";
 import { FloatingToolbar, useLiveblocksExtension } from "@liveblocks/react-tiptap";
 import { useRuler } from "../hooks/use-ruler";
 import { useUser } from "@clerk/nextjs";
-import { AuthorMark } from "./extensions/author";
+import { useMutation } from "convex/react";
+import { useRef } from "react";
+import { api } from "../../../../convex/_generated/api";
+import { Id } from "../../../../convex/_generated/dataModel";
 
 type Props = {
+    documentId: Id<"documents">;
     initialContent?: string;
     editable?: boolean;
     isTimeTraveling?: boolean;
@@ -57,9 +61,50 @@ const getUserColor = (id?: string) => {
     return colors[index];
 };
 
-export const Editor = ({ initialContent, editable = true, isTimeTraveling = false }: Props) => {
+export const Editor = ({ documentId, initialContent, editable = true, isTimeTraveling = false }: Props) => {
     const { setEditor } = useEditorStore((state) => state);
     const { user } = useUser();
+
+    const createRevision = useMutation(api.documents.createRevision);
+    const lastSavedContentRef = useRef<string>("");
+    const lastSaveTimeRef = useRef<number>(0);
+    const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    const documentIdRef = useRef(documentId);
+    documentIdRef.current = documentId;
+
+    const isTimeTravelingRef = useRef(isTimeTraveling);
+    isTimeTravelingRef.current = isTimeTraveling;
+
+    // Helper to perform the actual save
+    const saveIfNeeded = async (content: string) => {
+        if (
+            content === lastSavedContentRef.current ||
+            content === "<p></p>"
+        ) {
+            return;
+        }
+
+        try {
+            const timeStr = new Intl.DateTimeFormat("en-US", {
+                month: "short",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+            }).format(new Date());
+
+            await createRevision({
+                documentId: documentIdRef.current,
+                content,
+                title: `Auto-save (${timeStr})`,
+            });
+            lastSavedContentRef.current = content;
+            lastSaveTimeRef.current = Date.now();
+        } catch (err) {
+            console.error("[Auto-save Error]:", err);
+        }
+    };
 
     const liveblocks = useLiveblocksExtension({
         initialContent,
@@ -105,12 +150,6 @@ export const Editor = ({ initialContent, editable = true, isTimeTraveling = fals
             defaultLineHeight: "normal",
         }),
         SmartChip,
-        AuthorMark.configure({
-            userId: user?.id || "",
-            userName: user?.fullName || user?.primaryEmailAddress?.emailAddress || "Anonymous",
-            color: getUserColor(user?.id),
-            enabled: true,
-        }),
     ];
 
     if (!isTimeTraveling) {
@@ -125,14 +164,46 @@ export const Editor = ({ initialContent, editable = true, isTimeTraveling = fals
 
         onCreate({ editor }) {
             setEditor(editor);
+            lastSavedContentRef.current = editor.getHTML();
         },
 
         onDestroy() {
             setEditor(null);
+            if (autoSaveTimeoutRef.current) {
+                clearTimeout(autoSaveTimeoutRef.current);
+            }
         },
 
         onUpdate({ editor }) {
             setEditor(editor);
+
+            if (editor.isFocused && !isTimeTravelingRef.current) {
+                const currentContent = editor.getHTML();
+                if (autoSaveTimeoutRef.current) {
+                    clearTimeout(autoSaveTimeoutRef.current);
+                }
+
+                // Debounce for 3 seconds of inactivity
+                autoSaveTimeoutRef.current = setTimeout(async () => {
+                    const now = Date.now();
+                    const timeSinceLastSave = now - lastSaveTimeRef.current;
+                    const cooldown = 15000; // 15 seconds cooldown
+
+                    if (timeSinceLastSave >= cooldown) {
+                        await saveIfNeeded(currentContent);
+                    } else {
+                        // Cooldown is active, reschedule the save to run as soon as cooldown expires
+                        const remainingTime = cooldown - timeSinceLastSave;
+                        if (autoSaveTimeoutRef.current) {
+                            clearTimeout(autoSaveTimeoutRef.current);
+                        }
+                        autoSaveTimeoutRef.current = setTimeout(async () => {
+                            if (editor.isDestroyed) return;
+                            await saveIfNeeded(editor.getHTML());
+                        }, remainingTime);
+                    }
+                }, 3000);
+            }
         },
 
         onSelectionUpdate({ editor }) {

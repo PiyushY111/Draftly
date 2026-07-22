@@ -50,7 +50,7 @@ import { useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
 import { DocumentInput } from "./document-input";
-import { VoiceTalk } from "./voice-talk";
+// import { VoiceTalk } from "./voice-talk";
 import { ShareDialog } from "./share-dialog";
 type Props = {
     id: Id<"documents">;
@@ -203,6 +203,14 @@ export const Navbar = ({ id, title, onToggleRevisions }: Props) => {
                                             <Trash />
                                             Remove
                                         </MenubarItem>
+                                        {onToggleRevisions && (
+                                            <MenubarItem
+                                                onClick={onToggleRevisions}
+                                            >
+                                                <History />
+                                                Version History
+                                            </MenubarItem>
+                                        )}
                                         <MenubarSeparator />
                                         <MenubarSub>
                                             <MenubarSubTrigger>
@@ -439,7 +447,18 @@ export const Navbar = ({ id, title, onToggleRevisions }: Props) => {
                         <UserPlus className="size-4" />
                         Share
                     </Button>
-                    <VoiceTalk />
+                    {/* <VoiceTalk /> */}
+                    {onToggleRevisions && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={onToggleRevisions}
+                            className="size-8 text-slate-500 hover:text-slate-700 hover:bg-slate-100/50 rounded-full transition shrink-0"
+                            title="Version History"
+                        >
+                            <History className="size-4" />
+                        </Button>
+                    )}
                     <AvatarStack />
                     <OrganizationSwitcher
                         hideSlug
