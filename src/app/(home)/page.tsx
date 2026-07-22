@@ -1,8 +1,8 @@
 import { Dashboard } from "@/modules/home/components/dashboard";
 import { Navbar } from "@/modules/home/components/navbar";
-import { LandingPage } from "@/modules/home/components/landing-page";
 import { HomeLiveblocksProvider } from "@/providers/home-liveblocks-provider";
 import { auth } from "@clerk/nextjs/server";
+import { SignIn } from "@clerk/nextjs";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +10,11 @@ export default async function HomePage() {
     const { userId } = await auth();
 
     if (!userId) {
-        return <LandingPage />;
+        return (
+            <div className="flex min-h-screen flex-col items-center justify-center bg-[#fafbfd]">
+                <SignIn routing="hash" />
+            </div>
+        );
     }
 
     return (
