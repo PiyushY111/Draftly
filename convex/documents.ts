@@ -1,6 +1,6 @@
 import { paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { action, mutation, query } from "./_generated/server";
 
 export type OrganizationId = string | null;
 export enum Role {
@@ -14,8 +14,9 @@ export const list = query({
         search: v.optional(v.string()),
         folderId: v.optional(v.id("folders")),
         onlyStarred: v.optional(v.boolean()),
+        userEmail: v.optional(v.string()),
     },
-    handler: async (ctx, { paginationOpts, search, folderId, onlyStarred }) => {
+    handler: async (ctx, { paginationOpts, search, folderId, onlyStarred, userEmail }) => {
         const user = await ctx.auth.getUserIdentity();
         if (!user) {
             throw new ConvexError("Unauthorized");
@@ -82,12 +83,12 @@ export const list = query({
 
         // Fetch shared documents at the root level of drive listing
         if (!onlyStarred && !folderId) {
-            const userEmail = user.email?.toLowerCase();
-            if (userEmail) {
+            const emailToCheck = (userEmail || user.email)?.toLowerCase();
+            if (emailToCheck) {
                 const allDocs = await ctx.db.query("documents").collect();
                 const sharedDocs = allDocs.filter(doc => 
                     doc.ownerId !== user.subject &&
-                    doc.sharedEmails?.map(e => e.toLowerCase()).includes(userEmail)
+                    doc.sharedEmails?.map(e => e.toLowerCase()).includes(emailToCheck)
                 );
                 
                 const merged = [...paginatedResults.page, ...sharedDocs];
@@ -460,6 +461,63 @@ export const unshare = mutation({
         const updated = sharedEmails.filter((e) => e.toLowerCase() !== email.trim().toLowerCase());
 
         await ctx.db.patch(id, { sharedEmails: updated });
+    },
+});
+
+export const sendShareEmail = action({
+    args: {
+        email: v.string(),
+        docTitle: v.string(),
+        docUrl: v.string(),
+        ownerName: v.string(),
+    },
+    handler: async (ctx, { email, docTitle, docUrl, ownerName }) => {
+        const resendApiKey = process.env.RESEND_API_KEY;
+        if (!resendApiKey) {
+            console.log(`[Resend Mock Email]:
+To: ${email}
+Subject: ${ownerName} shared a document with you: "${docTitle}"
+Body: Click the link to view the document: ${docUrl}`);
+            return;
+        }
+
+        try {
+            const response = await fetch("https://api.resend.com/emails", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${resendApiKey}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    from: "Draftly <onboarding@resend.dev>",
+                    to: email,
+                    subject: `${ownerName} shared a document with you: "${docTitle}"`,
+                    html: `
+                        <div style="font-family: sans-serif; padding: 20px; color: #333; max-width: 600px; border: 1px solid #e2e8f0; border-radius: 12px; margin: 0 auto;">
+                            <h2 style="color: #1e3a8a; margin-top: 0;">Document Shared with You</h2>
+                            <p><strong>${ownerName}</strong> has shared a collaborative document with you on Draftly.</p>
+                            <div style="margin: 25px 0;">
+                                <a href="${docUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                                    Open "${docTitle}"
+                                </a>
+                            </div>
+                            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+                            <p style="color: #64748b; font-size: 12px;">If you didn't expect this email, you can safely ignore it.</p>
+                        </div>
+                    `,
+                }),
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`Resend API error: ${errText}`);
+            }
+            
+            console.log(`[Resend Email Sent] Successfully sent sharing notification to ${email}`);
+        } catch (error) {
+            console.error("[Resend Email Error]:", error);
+            throw new ConvexError("Failed to send share email notification");
+        }
     },
 });
 

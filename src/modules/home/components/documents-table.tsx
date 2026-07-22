@@ -67,8 +67,10 @@ const DocumentsTableContent = ({ results, status }: Props) => {
 
 import { useQueryState, parseAsString } from "nuqs";
 import { Id } from "../../../../convex/_generated/dataModel";
+import { useUser } from "@clerk/nextjs";
 
 export function DocumentsTable() {
+    const { user } = useUser();
     const [search] = useSearchParam();
     const [folderId] = useQueryState("folderId", parseAsString);
     const [tab] = useQueryState("tab", parseAsString);
@@ -80,6 +82,7 @@ export function DocumentsTable() {
             search,
             folderId: folderId ? (folderId as Id<"folders">) : undefined,
             onlyStarred: onlyStarred || undefined,
+            userEmail: user?.primaryEmailAddress?.emailAddress || undefined,
         },
         { initialNumItems: 5 },
     );

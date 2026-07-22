@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ export const ShareDialog = ({ documentId, open, onOpenChange }: Props) => {
     const document = useQuery(api.documents.get, { id: documentId });
     const share = useMutation(api.documents.share);
     const unshare = useMutation(api.documents.unshare);
+    const sendShareEmail = useAction(api.documents.sendShareEmail);
 
     if (!document) return null;
 
@@ -56,7 +57,17 @@ export const ShareDialog = ({ documentId, open, onOpenChange }: Props) => {
         setIsSubmitting(true);
         try {
             await share({ id: documentId, email: targetEmail });
-            toast.success(`Access shared with ${targetEmail}`);
+            
+            // Send email notification (either Resend API or print log in backend console)
+            const docUrl = `${window.location.origin}/documents/${documentId}`;
+            await sendShareEmail({
+                email: targetEmail,
+                docTitle: document.title,
+                docUrl,
+                ownerName: user?.fullName || user?.emailAddresses[0]?.emailAddress || "A collaborator",
+            });
+
+            toast.success(`Access shared with ${targetEmail} and notification sent!`);
             setEmail("");
         } catch (err) {
             toast.error("Failed to share document");
