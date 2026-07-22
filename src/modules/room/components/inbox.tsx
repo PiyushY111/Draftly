@@ -14,7 +14,8 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import { BellIcon } from "lucide-react";
+import { BellIcon, FileText } from "lucide-react";
+import Link from "next/link";
 
 export const InboxMenu = () => {
     const { inboxNotifications } = useInboxNotifications();
@@ -32,15 +33,46 @@ export const InboxMenu = () => {
                         )}
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-auto">
+                <DropdownMenuContent align="end" className="p-0 overflow-hidden w-auto">
                     {inboxNotifications.length > 0 ? (
                         <InboxNotificationList>
-                            {inboxNotifications.map((notification) => (
-                                <InboxNotification
-                                    key={notification.id}
-                                    inboxNotification={notification}
-                                />
-                            ))}
+                            {inboxNotifications.map((notification) => {
+                                if (notification.kind === "$documentShared") {
+                                    const activity = notification.activities[0];
+                                    const { docTitle, docUrl, ownerName } = (activity?.data || {}) as { docTitle?: string; docUrl?: string; ownerName?: string };
+                                    return (
+                                        <div
+                                            key={notification.id}
+                                            className="flex gap-3 p-3.5 hover:bg-slate-50 border-b border-slate-100 last:border-0 items-start select-none w-[320px]"
+                                        >
+                                            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg shrink-0 mt-0.5">
+                                                <FileText className="size-4" />
+                                            </div>
+                                            <div className="flex-1 min-w-0 text-sm">
+                                                <p className="text-slate-600 leading-snug">
+                                                    <span className="font-semibold text-slate-800">{ownerName}</span> shared a document with you:
+                                                </p>
+                                                <Link
+                                                    href={docUrl || "#"}
+                                                    className="font-semibold text-blue-600 hover:underline block mt-1 truncate"
+                                                >
+                                                    {docTitle || "Untitled document"}
+                                                </Link>
+                                            </div>
+                                            {!notification.readAt && (
+                                                <div className="size-2 bg-blue-500 rounded-full mt-2 shrink-0" />
+                                            )}
+                                        </div>
+                                    );
+                                }
+
+                                return (
+                                    <InboxNotification
+                                        key={notification.id}
+                                        inboxNotification={notification}
+                                    />
+                                );
+                            })}
                         </InboxNotificationList>
                     ) : (
                         <div className="text-muted-foreground w-[400px] p-2 text-center text-sm">
