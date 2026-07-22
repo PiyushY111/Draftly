@@ -2,6 +2,9 @@
 
 import { usePaginatedQuery, UsePaginatedQueryResult } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import { motion, AnimatePresence } from "framer-motion";
+import { useQueryState, parseAsString } from "nuqs";
+import { useUser } from "@clerk/nextjs";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,8 +19,19 @@ import {
 import { useSearchParam } from "@/hooks/use-search-param";
 import { cn } from "@/lib/utils";
 import { Loader } from "lucide-react";
-import { Doc } from "../../../../convex/_generated/dataModel";
+import { Doc, Id } from "../../../../convex/_generated/dataModel";
+import { DocumentCard } from "./document-card";
 import { DocumentRow } from "./document-row";
+
+const DocumentCardsSkeleton = () => {
+    return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-5">
+            {[...Array(4)].map((_, index) => (
+                <Skeleton key={index} className="h-56 rounded-2xl" />
+            ))}
+        </div>
+    );
+};
 
 const DocumentTableSkeleton = () => {
     return (
@@ -34,42 +48,72 @@ const DocumentTableSkeleton = () => {
 };
 
 type T = UsePaginatedQueryResult<Doc<"documents">>;
-type Props = Pick<T, "results" | "status">;
+type Props = Pick<T, "results" | "status"> & { viewMode?: "table" | "cards" };
 
-const DocumentsTableContent = ({ results, status }: Props) => {
+const DocumentsTableContent = ({ results, status, viewMode = "cards" }: Props) => {
     if (status === "LoadingFirstPage") {
-        return <DocumentTableSkeleton />;
+        return viewMode === "cards" ? <DocumentCardsSkeleton /> : <DocumentTableSkeleton />;
     }
 
     if (results.length === 0) {
         return (
-            <TableBody>
-                <TableRow className="hover:bg-transparent">
-                    <TableCell
-                        colSpan={4}
-                        className="text-muted-foreground h-24 text-center"
-                    >
-                        No documents found
-                    </TableCell>
-                </TableRow>
-            </TableBody>
+            <div className="flex h-36 w-full items-center justify-center text-sm font-medium text-slate-400">
+                No documents found
+            </div>
         );
     }
 
     return (
-        <TableBody>
-            {results.map((document) => (
-                <DocumentRow key={document._id} document={document} />
-            ))}
-        </TableBody>
+        <AnimatePresence mode="wait" initial={false}>
+            {viewMode === "cards" ? (
+                <motion.div
+                    key="cards-view"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-5"
+                >
+                    {results.map((document) => (
+                        <DocumentCard key={document._id} document={document} />
+                    ))}
+                </motion.div>
+            ) : (
+                <motion.div
+                    key="table-view"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                >
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="border-b border-slate-100 hover:bg-transparent">
+                                <TableHead className="w-[30px]">&nbsp;</TableHead>
+                                <TableHead className="w-[40px]">&nbsp;</TableHead>
+                                <TableHead className="font-bold text-xs uppercase tracking-wider text-slate-500">Name</TableHead>
+                                <TableHead className="hidden md:table-cell font-bold text-xs uppercase tracking-wider text-slate-500">
+                                    Owner
+                                </TableHead>
+                                <TableHead className="hidden md:table-cell font-bold text-xs uppercase tracking-wider text-slate-500">
+                                    Created at
+                                </TableHead>
+                                <TableHead className="w-[50px] text-right">&nbsp;</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {results.map((document) => (
+                                <DocumentRow key={document._id} document={document} />
+                            ))}
+                        </TableBody>
+                    </Table>
+                </motion.div>
+            )}
+        </AnimatePresence>
     );
 };
 
-import { useQueryState, parseAsString } from "nuqs";
-import { Id } from "../../../../convex/_generated/dataModel";
-import { useUser } from "@clerk/nextjs";
-
-export function DocumentsTable() {
+export function DocumentsTable({ viewMode = "cards" }: { viewMode?: "table" | "cards" }) {
     const { user } = useUser();
     const [search] = useSearchParam();
     const [folderId] = useQueryState("folderId", parseAsString);
@@ -84,43 +128,29 @@ export function DocumentsTable() {
             onlyStarred: onlyStarred || undefined,
             userEmail: user?.primaryEmailAddress?.emailAddress || undefined,
         },
-        { initialNumItems: 5 },
+        { initialNumItems: 8 },
     );
 
     return (
-        <div className="mx-auto flex max-w-6xl flex-col gap-5 px-16 py-6">
-            <Table>
-                <TableHeader>
-                    <TableRow className="border-none hover:bg-transparent">
-                        <TableHead className="w-[30px]">&nbsp;</TableHead>
-                        <TableHead className="w-[50px]">&nbsp;</TableHead>
-                        <TableHead className="font-semibold text-slate-800">Name</TableHead>
-                        <TableHead className="hidden md:table-cell font-semibold text-slate-800">
-                            Owner
-                        </TableHead>
-                        <TableHead className="hidden md:table-cell font-semibold text-slate-800">
-                            Created at
-                        </TableHead>
-                        <TableHead className="w-[50px] text-right">&nbsp;</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <DocumentsTableContent results={results} status={status} />
-            </Table>
+        <div className="flex w-full flex-col gap-3">
+            <DocumentsTableContent results={results} status={status} viewMode={viewMode} />
             <div
                 className={cn(
-                    "flex items-center justify-center",
+                    "flex items-center justify-center pb-4 pt-1",
                     (status === "Exhausted" || status === "LoadingFirstPage") &&
                         "hidden",
                 )}
             >
                 <Button
                     variant="secondary"
-                    onClick={() => loadMore(5)}
+                    size="sm"
+                    className="border border-dashed border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl active:scale-95 transition-all"
+                    onClick={() => loadMore(8)}
                     disabled={isLoading}
                 >
                     {status === "LoadingMore" ? (
                         <>
-                            <Loader className="text-muted-foreground animate-spin" />
+                            <Loader className="text-muted-foreground animate-spin size-3.5" />
                             Loading...
                         </>
                     ) : (

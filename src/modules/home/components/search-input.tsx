@@ -20,12 +20,12 @@ export const SearchInput = () => {
     };
 
     return (
-        <div className="flex flex-1 items-center justify-center">
-            <div className="relative w-full max-w-[720px]">
+        <div className="flex flex-1 items-center justify-center max-w-md mx-3">
+            <div className="relative w-full">
                 <Input
                     ref={inputRef}
-                    className="h-12 w-full rounded-full border-none bg-[#f0f4fb] px-14 placeholder:text-neutral-800 focus-within:shadow-[0_1px_1px_0_rgba(65,69,73,.3),0_1px_3px_1px_rgba(65,69,73,.15)] focus:bg-white focus-visible:ring-0 md:text-base"
-                    placeholder="Search"
+                    className="h-8 w-full rounded-lg border border-slate-200/80 bg-slate-100/70 pl-8 pr-8 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus-within:border-blue-500 focus-within:bg-white focus-within:shadow-xs focus-visible:outline-none focus-visible:ring-0 transition-all"
+                    placeholder="Search documents..."
                     defaultValue={search}
                     onChange={(e) => {
                         setSearch(e.target.value);
@@ -35,9 +35,9 @@ export const SearchInput = () => {
                     type="submit"
                     variant="ghost"
                     size="icon"
-                    className="absolute top-1/2 left-3 -translate-y-1/2 rounded-full"
+                    className="absolute top-1/2 left-1.5 -translate-y-1/2 rounded-full size-7 hover:bg-transparent"
                 >
-                    <Search className="text-muted-foreground size-5" />
+                    <Search className="text-slate-400 size-4" />
                 </Button>
 
                 {search && (
@@ -45,10 +45,10 @@ export const SearchInput = () => {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="absolute top-1/2 right-3 -translate-y-1/2 rounded-full"
+                        className="absolute top-1/2 right-1.5 -translate-y-1/2 rounded-full size-7 hover:bg-slate-200/60"
                         onClick={onClear}
                     >
-                        <X className="text-muted-foreground size-5" />
+                        <X className="text-slate-500 size-4" />
                     </Button>
                 )}
             </div>

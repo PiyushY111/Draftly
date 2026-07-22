@@ -13,6 +13,14 @@ import {
     FilePlus,
     ChevronRight,
     Home,
+    ChevronsUpDown,
+    Search,
+    Users,
+    Building2,
+    Table,
+    List,
+    Filter,
+    LayoutGrid,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -30,10 +38,15 @@ import { TemplateGallery } from "./template-gallery";
 import { useRouter } from "next/navigation";
 import { Id } from "../../../../convex/_generated/dataModel";
 
+import { motion } from "framer-motion";
+
+import { Navbar } from "./navbar";
+
 export const Dashboard = () => {
     const router = useRouter();
     const [folderId, setFolderId] = useQueryState("folderId", parseAsString);
     const [tab, setTab] = useQueryState("tab", parseAsString);
+    const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
 
     const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
 
@@ -79,94 +92,142 @@ export const Dashboard = () => {
     };
 
     return (
-        <div className="flex flex-1 min-h-0 bg-[#f9fbfd]">
-            {/* Sidebar */}
-            <div className="w-64 shrink-0 border-r border-slate-200/80 bg-white px-4 py-6 flex flex-col gap-6 print:hidden">
-                {/* New button dropdown */}
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button
-                            size="lg"
-                            className="w-40 justify-start gap-2 shadow-sm rounded-full bg-blue-600 hover:bg-blue-700 text-white font-medium"
-                        >
-                            <Plus className="size-5" />
-                            New
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-44" align="start">
-                        <DropdownMenuItem onClick={handleCreateDocument}>
-                            <FilePlus className="size-4 mr-2 text-blue-500" />
-                            New Document
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setIsCreateFolderOpen(true)}>
-                            <FolderPlus className="size-4 mr-2 text-yellow-500" />
-                            New Folder
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-
-                {/* Sidebar Navigation */}
-                <div className="flex flex-col gap-1">
-                    <button
-                        onClick={() => {
-                            setTab(null);
-                            setFolderId(null);
-                        }}
-                        className={cn(
-                            "flex items-center gap-3 px-4 py-2.5 rounded-full text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 cursor-pointer",
-                            activeTab === "drive" &&
-                                "bg-blue-50 text-blue-700 hover:bg-blue-50 hover:text-blue-700",
-                        )}
-                    >
-                        <Home className="size-4" />
-                        My Drive
-                    </button>
-                    <button
-                        onClick={() => {
-                            setTab("starred");
-                            setFolderId(null);
-                        }}
-                        className={cn(
-                            "flex items-center gap-3 px-4 py-2.5 rounded-full text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 cursor-pointer",
-                            activeTab === "starred" &&
-                                "bg-blue-50 text-blue-700 hover:bg-blue-50 hover:text-blue-700",
-                        )}
-                    >
-                        <Star className="size-4" />
-                        Starred
-                    </button>
+        <div className="flex min-h-screen w-full flex-col bg-[#f4f5f8] p-5 md:p-8">
+            <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+                {/* Reduced Floating Navbar */}
+                <div className="w-full">
+                    <Navbar
+                        onCreateDocument={handleCreateDocument}
+                        onCreateFolder={() => setIsCreateFolderOpen(true)}
+                    />
                 </div>
-            </div>
 
-            {/* Main Content Dashboard */}
-            <div className="flex-1 flex flex-col min-w-0 overflow-y-auto px-16 py-8 gap-6">
                 <DndContext onDragEnd={handleDragEnd}>
-                    {/* Header Path & Breadcrumbs */}
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-sm font-medium text-slate-500 select-none">
-                            <button
+                    {/* Header Path & View Filter Controls */}
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex flex-col gap-1"></div>
+
+                        {/* Toolbar Controls: Cards/Table switcher, Starred filter, Filter dropdown */}
+                        <div className="flex items-center gap-2.5">
+                            {/* View Switcher Pill: Cards vs Table */}
+                            <div className="relative flex items-center gap-1 rounded-xl bg-slate-200/70 p-1">
+                                <button
+                                    onClick={() => setViewMode("cards")}
+                                    className={cn(
+                                        "relative z-10 flex h-7 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-colors duration-200 select-none active:scale-[0.97]",
+                                        viewMode === "cards"
+                                            ? "font-bold text-slate-900"
+                                            : "text-slate-600 hover:text-slate-900",
+                                    )}
+                                >
+                                    {viewMode === "cards" && (
+                                        <motion.div
+                                            layoutId="viewModePill"
+                                            className="absolute inset-0 z-[-1] rounded-lg bg-white shadow-xs"
+                                            transition={{
+                                                type: "spring",
+                                                stiffness: 500,
+                                                damping: 35,
+                                                mass: 0.8,
+                                            }}
+                                        />
+                                    )}
+                                    <LayoutGrid className="size-3.5" />
+                                    <span>Cards</span>
+                                </button>
+                                <button
+                                    onClick={() => setViewMode("table")}
+                                    className={cn(
+                                        "relative z-10 flex h-7 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-colors duration-200 select-none active:scale-[0.97]",
+                                        viewMode === "table"
+                                            ? "font-bold text-slate-900"
+                                            : "text-slate-600 hover:text-slate-900",
+                                    )}
+                                >
+                                    {viewMode === "table" && (
+                                        <motion.div
+                                            layoutId="viewModePill"
+                                            className="absolute inset-0 z-[-1] rounded-lg bg-white shadow-xs"
+                                            transition={{
+                                                type: "spring",
+                                                stiffness: 500,
+                                                damping: 35,
+                                                mass: 0.8,
+                                            }}
+                                        />
+                                    )}
+                                    <Table className="size-3.5" />
+                                    <span>Table</span>
+                                </button>
+                            </div>
+
+                            {/* Starred Filter Option Toggle */}
+                            <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={() => {
-                                    setFolderId(null);
-                                    setTab(null);
+                                    if (activeTab === "starred") {
+                                        setTab(null);
+                                    } else {
+                                        setTab("starred");
+                                        setFolderId(null);
+                                    }
                                 }}
-                                className="hover:text-slate-900 cursor-pointer"
+                                className={cn(
+                                    "h-8 cursor-pointer gap-1.5 rounded-xl border border-dashed text-xs font-semibold transition-all active:scale-[0.98]",
+                                    activeTab === "starred"
+                                        ? "border-amber-300 bg-amber-50 text-amber-800 shadow-xs hover:bg-amber-100"
+                                        : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
+                                )}
                             >
-                                My Drive
-                            </button>
-                            {currentFolder && (
-                                <>
-                                    <ChevronRight className="size-4 text-slate-400" />
-                                    <span className="text-slate-900 font-semibold truncate max-w-[200px]">
-                                        {currentFolder.name}
-                                    </span>
-                                </>
-                            )}
-                            {activeTab === "starred" && (
-                                <>
-                                    <ChevronRight className="size-4 text-slate-400" />
-                                    <span className="text-slate-900 font-semibold">Starred</span>
-                                </>
-                            )}
+                                <Star
+                                    className={cn(
+                                        "size-3.5",
+                                        activeTab === "starred"
+                                            ? "fill-amber-500 text-amber-500"
+                                            : "text-slate-500",
+                                    )}
+                                />
+                                <span>Starred</span>
+                            </Button>
+
+                            {/* Filter Dropdown Menu */}
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 cursor-pointer gap-1.5 rounded-xl border-dashed border-slate-300 bg-white text-xs font-medium text-slate-700 transition-all hover:bg-slate-50 active:scale-[0.98]"
+                                    >
+                                        <Filter className="size-3.5 text-slate-500" />
+                                        <span>Filter</span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                    align="end"
+                                    className="w-40"
+                                >
+                                    <DropdownMenuItem
+                                        onClick={() => {
+                                            setTab(null);
+                                            setFolderId(null);
+                                        }}
+                                        className="cursor-pointer font-medium text-slate-700"
+                                    >
+                                        All Files
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onClick={() => {
+                                            setTab("starred");
+                                            setFolderId(null);
+                                        }}
+                                        className="cursor-pointer font-medium text-slate-700"
+                                    >
+                                        <Star className="mr-2 size-3.5 fill-amber-500 text-amber-500" />
+                                        Starred Only
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     </div>
 
@@ -183,15 +244,23 @@ export const Dashboard = () => {
                         />
                     )}
 
-                    {/* Documents Table Section */}
-                    <div className="flex-1 flex flex-col min-h-0 bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                            <h3 className="font-semibold text-slate-800 text-base">
-                                {activeTab === "starred" ? "Starred files" : "Files"}
-                            </h3>
+                    {/* Documents Table / Cards Section (At the bottom of dashboard) */}
+                    <div className="flex w-full flex-col rounded-2xl border border-dashed border-slate-300 bg-white shadow-sm">
+                        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-5 py-3.5">
+                            <div className="flex items-center gap-2">
+                                <span className="size-2 rounded-full bg-blue-600"></span>
+                                <h3 className="text-xs font-semibold tracking-wider text-slate-800 uppercase">
+                                    {activeTab === "starred"
+                                        ? "Starred files"
+                                        : "Files"}
+                                </h3>
+                            </div>
+                            <span className="text-xs font-medium text-slate-400">
+                                Drag to move items
+                            </span>
                         </div>
-                        <div className="flex-1 overflow-y-auto">
-                            <DocumentsTable />
+                        <div className="w-full">
+                            <DocumentsTable viewMode={viewMode} />
                         </div>
                     </div>
                 </DndContext>

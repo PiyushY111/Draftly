@@ -73,13 +73,13 @@ const FolderCard = ({
                 ref={setNodeRef}
                 onClick={onClick}
                 className={cn(
-                    "relative flex items-center justify-between gap-3 px-4 py-3 bg-white border rounded-xl shadow-sm transition hover:shadow-md cursor-pointer select-none border-slate-200",
-                    isOver && "border-blue-500 bg-blue-50/50 scale-102 shadow-md",
+                    "relative flex items-center justify-between gap-3 px-4 py-3 bg-white border border-dashed border-slate-300 rounded-xl shadow-none transition-all duration-200 hover:border-blue-500 hover:shadow-sm cursor-pointer select-none",
+                    isOver && "border-blue-600 border-solid bg-blue-50/50 scale-102 shadow-md",
                 )}
             >
                 <div className="flex items-center gap-2.5 min-w-0">
-                    <Folder className="size-6 text-blue-500 fill-blue-500/20 shrink-0" />
-                    <span className="text-sm font-medium text-slate-700 truncate">
+                    <Folder className="size-5 text-blue-600 fill-blue-600/10 shrink-0" />
+                    <span className="text-xs font-semibold text-slate-800 truncate">
                         {folder.name}
                     </span>
                 </div>

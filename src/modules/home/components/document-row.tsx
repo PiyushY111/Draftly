@@ -53,8 +53,8 @@ export const DocumentRow = ({ document }: Props) => {
             ref={setNodeRef}
             style={style}
             className={cn(
-                "cursor-pointer transition hover:bg-slate-50/80",
-                isDragging && "opacity-50 shadow-md border-blue-200 bg-blue-50/20",
+                "group cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50/80",
+                isDragging && "opacity-50 shadow-md border-blue-200 bg-blue-50/30",
             )}
             onClick={onClick}
         >
@@ -62,52 +62,54 @@ export const DocumentRow = ({ document }: Props) => {
                 <div
                     {...attributes}
                     {...listeners}
-                    className="p-1 hover:bg-slate-100 rounded cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 transition flex items-center justify-center"
+                    className="p-1 hover:bg-slate-200/60 rounded cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 transition flex items-center justify-center"
                     title="Drag to move"
                 >
                     <GripVertical className="size-4 shrink-0" />
                 </div>
             </TableCell>
-            <TableCell className="w-[50px] text-center" onClick={(e) => e.stopPropagation()}>
+            <TableCell className="w-[40px] text-center" onClick={(e) => e.stopPropagation()}>
                 <button
                     onClick={handleStarClick}
-                    className="p-1 hover:bg-slate-100 rounded-full transition"
+                    className="p-1 hover:bg-slate-200/60 rounded-full transition"
                 >
                     <Star
                         className={cn(
-                            "size-4 text-slate-300 hover:text-yellow-400 hover:fill-yellow-400",
-                            document.isStarred && "text-yellow-400 fill-yellow-400",
+                            "size-4 text-slate-300 hover:text-amber-400 hover:fill-amber-400 transition-colors",
+                            document.isStarred && "text-amber-400 fill-amber-400",
                         )}
                     />
                 </button>
             </TableCell>
-            <TableCell className="font-medium md:w-[45%]">
-                <div className="flex items-center gap-3">
-                    <FileText className="text-blue-500 size-5 shrink-0" />
-                    <span className="truncate">{document.title}</span>
+            <TableCell className="font-medium text-xs md:w-[45%] text-slate-800">
+                <div className="flex items-center gap-2.5">
+                    <FileText className="text-blue-600 size-4 shrink-0" />
+                    <span className="truncate group-hover:text-blue-600 transition-colors font-medium">
+                        {document.title}
+                    </span>
                 </div>
             </TableCell>
-            <TableCell className="text-muted-foreground hidden md:table-cell">
-                <div className="flex items-center gap-2 [&_svg]:size-4 [&_svg]:text-muted-foreground">
+            <TableCell className="text-xs text-slate-600 hidden md:table-cell">
+                <div className="flex items-center gap-2">
                     {userId === document.ownerId ? (
                         <>
-                           <CircleUser className="size-4 text-slate-400" />
-                           <span className="text-slate-700">me</span>
+                           <CircleUser className="size-3.5 text-slate-400" />
+                           <span className="text-slate-700 font-medium">me</span>
                         </>
                     ) : document.organizationId ? (
                         <>
-                           <Building2 className="size-4 text-slate-400" />
-                           <span className="text-slate-700">Organization</span>
+                           <Building2 className="size-3.5 text-slate-400" />
+                           <span className="text-slate-700 font-medium">Organization</span>
                         </>
                     ) : (
                         <>
-                           <CircleUser className="size-4 text-blue-500" />
-                           <span className="text-blue-600 font-semibold bg-blue-50/50 px-2 py-0.5 rounded border border-blue-100/50">Shared</span>
+                           <CircleUser className="size-3.5 text-blue-500" />
+                           <span className="text-blue-700 font-semibold bg-blue-50 px-2 py-0.5 rounded border border-blue-200/60">Shared</span>
                         </>
                     )}
                 </div>
             </TableCell>
-            <TableCell className="text-muted-foreground hidden md:table-cell">
+            <TableCell className="text-xs text-slate-500 hidden md:table-cell font-medium">
                 {format(document._creationTime, "MMM d, yyyy")}
             </TableCell>
             <TableCell
