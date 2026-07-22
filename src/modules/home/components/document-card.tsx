@@ -2,11 +2,10 @@
 
 import { useAuth } from "@clerk/nextjs";
 import { format } from "date-fns";
-import { Building2, CircleUser, FileText, Star, GripVertical, Clock } from "lucide-react";
+import { Building2, CircleUser, FileText, Star, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Doc } from "../../../../convex/_generated/dataModel";
 import { DocumentMenu } from "./document-menu";
-import { useDraggable } from "@dnd-kit/core";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { toast } from "sonner";
@@ -20,17 +19,6 @@ export const DocumentCard = ({ document }: Props) => {
     const router = useRouter();
     const { userId, orgRole } = useAuth();
     const toggleStar = useMutation(api.documents.toggleStar);
-
-    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-        id: document._id,
-    });
-
-    const style = transform
-        ? {
-              transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-              zIndex: 999,
-          }
-        : undefined;
 
     const onClick = () => {
         router.push(`/documents/${document._id}`);
@@ -50,13 +38,8 @@ export const DocumentCard = ({ document }: Props) => {
 
     return (
         <div
-            ref={setNodeRef}
-            style={style}
             onClick={onClick}
-            className={cn(
-                "group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-dashed border-slate-300 bg-white shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-500 hover:shadow-md cursor-pointer select-none active:scale-[0.985]",
-                isDragging && "opacity-50 shadow-lg border-blue-600 border-solid bg-blue-50/40",
-            )}
+            className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-dashed border-slate-300 bg-white shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-500 hover:shadow-md cursor-pointer select-none active:scale-[0.985]"
         >
             {/* Top Dotted Pattern Header with Miniature Form/Document Overview */}
             <div
@@ -72,14 +55,6 @@ export const DocumentCard = ({ document }: Props) => {
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="flex items-center gap-1.5">
-                        <div
-                            {...attributes}
-                            {...listeners}
-                            className="flex items-center justify-center rounded-lg border border-slate-200/80 bg-white/90 p-1 text-slate-400 shadow-xs backdrop-blur-xs transition hover:text-slate-600 cursor-grab active:cursor-grabbing"
-                            title="Drag to move"
-                        >
-                            <GripVertical className="size-3.5 shrink-0" />
-                        </div>
                         <span className="inline-flex items-center gap-1 rounded-lg border border-blue-200/80 bg-blue-50/90 px-2 py-0.5 text-[10px] font-bold text-blue-700 shadow-xs backdrop-blur-xs">
                             <FileText className="size-3 text-blue-600" />
                             Doc

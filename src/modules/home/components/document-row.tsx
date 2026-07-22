@@ -1,11 +1,10 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { useAuth } from "@clerk/nextjs";
 import { format } from "date-fns";
-import { Building2, CircleUser, FileText, Star, GripVertical } from "lucide-react";
+import { Building2, CircleUser, FileText, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Doc } from "../../../../convex/_generated/dataModel";
 import { DocumentMenu } from "./document-menu";
-import { useDraggable } from "@dnd-kit/core";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { toast } from "sonner";
@@ -20,17 +19,6 @@ export const DocumentRow = ({ document }: Props) => {
     const { userId, orgRole } = useAuth();
     
     const toggleStar = useMutation(api.documents.toggleStar);
-
-    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-        id: document._id,
-    });
-
-    const style = transform
-        ? {
-              transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-              zIndex: 999,
-          }
-        : undefined;
 
     const onClick = () => {
         router.push(`/documents/${document._id}`);
@@ -50,24 +38,9 @@ export const DocumentRow = ({ document }: Props) => {
 
     return (
         <TableRow
-            ref={setNodeRef}
-            style={style}
-            className={cn(
-                "group cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50/80",
-                isDragging && "opacity-50 shadow-md border-blue-200 bg-blue-50/30",
-            )}
+            className="group cursor-pointer border-b border-slate-100 transition-colors hover:bg-slate-50/80"
             onClick={onClick}
         >
-            <TableCell className="w-[30px] pr-0" onClick={(e) => e.stopPropagation()}>
-                <div
-                    {...attributes}
-                    {...listeners}
-                    className="p-1 hover:bg-slate-200/60 rounded cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 transition flex items-center justify-center"
-                    title="Drag to move"
-                >
-                    <GripVertical className="size-4 shrink-0" />
-                </div>
-            </TableCell>
             <TableCell className="w-[40px] text-center" onClick={(e) => e.stopPropagation()}>
                 <button
                     onClick={handleStarClick}

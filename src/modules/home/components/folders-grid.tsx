@@ -10,7 +10,6 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useDroppable } from "@dnd-kit/core";
 import { cn, handleError } from "@/lib/utils";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -36,10 +35,6 @@ const FolderCard = ({
     folder: FolderItem;
     onClick: () => void;
 }) => {
-    const { isOver, setNodeRef } = useDroppable({
-        id: folder._id,
-    });
-
     const [isRenameOpen, setIsRenameOpen] = useState(false);
     const [renameValue, setRenameValue] = useState(folder.name);
 
@@ -70,12 +65,8 @@ const FolderCard = ({
     return (
         <>
             <div
-                ref={setNodeRef}
                 onClick={onClick}
-                className={cn(
-                    "relative flex items-center justify-between gap-3 px-4 py-3 bg-white border border-dashed border-slate-300 rounded-xl shadow-none transition-all duration-200 hover:border-blue-500 hover:shadow-sm cursor-pointer select-none",
-                    isOver && "border-blue-600 border-solid bg-blue-50/50 scale-102 shadow-md",
-                )}
+                className="relative flex items-center justify-between gap-3 px-4 py-3 bg-white border border-dashed border-slate-300 rounded-xl shadow-none transition-all duration-200 hover:border-blue-500 hover:shadow-sm cursor-pointer select-none"
             >
                 <div className="flex items-center gap-2.5 min-w-0">
                     <Folder className="size-5 text-blue-600 fill-blue-600/10 shrink-0" />

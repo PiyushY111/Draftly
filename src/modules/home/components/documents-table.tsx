@@ -89,7 +89,6 @@ const DocumentsTableContent = ({ results, status, viewMode = "cards" }: Props) =
                     <Table>
                         <TableHeader>
                             <TableRow className="border-b border-slate-100 hover:bg-transparent">
-                                <TableHead className="w-[30px]">&nbsp;</TableHead>
                                 <TableHead className="w-[40px]">&nbsp;</TableHead>
                                 <TableHead className="font-bold text-xs uppercase tracking-wider text-slate-500">Name</TableHead>
                                 <TableHead className="hidden md:table-cell font-bold text-xs uppercase tracking-wider text-slate-500">

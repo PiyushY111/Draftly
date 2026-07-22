@@ -2,7 +2,6 @@
 
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
-import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { useQueryState, parseAsString } from "nuqs";
 import { toast } from "sonner";
 import {
@@ -57,7 +56,6 @@ export const Dashboard = () => {
     });
 
     const createDocument = useMutation(api.documents.create);
-    const moveToFolder = useMutation(api.documents.moveToFolder);
 
     const activeTab = tab || "drive";
 
@@ -75,22 +73,6 @@ export const Dashboard = () => {
         }
     };
 
-    // Drag-and-drop handler
-    const handleDragEnd = async (event: DragEndEvent) => {
-        const { active, over } = event;
-        if (!over) return;
-
-        const docId = active.id as Id<"documents">;
-        const targetFolderId = over.id as Id<"folders">;
-
-        try {
-            await moveToFolder({ id: docId, folderId: targetFolderId });
-            toast.success("Document moved successfully");
-        } catch (err) {
-            toast.error("Failed to move document");
-        }
-    };
-
     return (
         <div className="flex min-h-screen w-full flex-col bg-[#f4f5f8] p-5 md:p-8">
             <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
@@ -102,8 +84,7 @@ export const Dashboard = () => {
                     />
                 </div>
 
-                <DndContext onDragEnd={handleDragEnd}>
-                    {/* Header Path & View Filter Controls */}
+                {/* Header Path & View Filter Controls */}
                     <div className="flex flex-wrap items-center justify-between gap-4">
                         <div className="flex flex-col gap-1"></div>
 
@@ -255,15 +236,11 @@ export const Dashboard = () => {
                                         : "Files"}
                                 </h3>
                             </div>
-                            <span className="text-xs font-medium text-slate-400">
-                                Drag to move items
-                            </span>
                         </div>
                         <div className="w-full">
                             <DocumentsTable viewMode={viewMode} />
                         </div>
                     </div>
-                </DndContext>
             </div>
 
             {/* Folder creation Dialog */}
