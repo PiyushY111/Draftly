@@ -5,5 +5,9 @@ export default {
             domain: "https://kind-humpback-32.clerk.accounts.dev",
             applicationID: "convex",
         },
+        {
+            domain: "https://clerk.piyushydv.com",
+            applicationID: "convex",
+        },
     ],
 };
