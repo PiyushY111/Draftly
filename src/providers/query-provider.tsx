@@ -28,15 +28,7 @@ export function QueryProvider({ children }: { children: ReactNode }) {
         <ClerkProvider>
             <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
                 <QueryClientProvider client={queryClient}>
-                    <Authenticated>{children}</Authenticated>
-                    <Unauthenticated>
-                        <div className="flex min-h-screen flex-col items-center justify-center">
-                            <SignIn routing="hash" />
-                        </div>
-                    </Unauthenticated>
-                    <AuthLoading>
-                        <FullscreenLoader label="Auth loading..." />
-                    </AuthLoading>
+                    {children}
                 </QueryClientProvider>
             </ConvexProviderWithClerk>
         </ClerkProvider>

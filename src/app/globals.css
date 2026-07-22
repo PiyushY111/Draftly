@@ -369,3 +369,11 @@
 div[data-radix-popper-content-wrapper] {
     z-index: 50 !important;
 }
+
+@keyframes blink {
+    50% { opacity: 0; }
+}
+
+.animate-blink {
+    animation: blink 1s step-start infinite;
+}

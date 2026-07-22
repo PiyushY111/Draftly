@@ -1,8 +1,18 @@
 import { Dashboard } from "@/modules/home/components/dashboard";
 import { Navbar } from "@/modules/home/components/navbar";
+import { LandingPage } from "@/modules/home/components/landing-page";
 import { HomeLiveblocksProvider } from "@/providers/home-liveblocks-provider";
+import { auth } from "@clerk/nextjs/server";
+
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+    const { userId } = await auth();
+
+    if (!userId) {
+        return <LandingPage />;
+    }
+
     return (
         <HomeLiveblocksProvider>
             <div className="flex min-h-screen flex-col h-screen overflow-hidden">

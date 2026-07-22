@@ -1,77 +1,88 @@
-# 📄 GoogleDocs Clone
+# 📄 Draftly
 
-## 🚀 Overview
-
-GoogleDocs Clone is a fully-featured, real-time collaborative document editing platform, designed to bring the power of modern word processors into a web-based environment. Built with scalability, performance, and extensibility in mind, this project offers everything from advanced rich-text editing to real-time collaboration, notifications, document templates, and beyond.
-
-Whether you're building a collaborative note-taking app, a productivity suite, or an enterprise documentation tool, this clone provides the foundation for your needs.
-
-## ✨ Key Features
-
-### 📝 Rich Text Editing
-
-- **Advanced Tiptap Editor**: Powered by custom extensions for tables, images, margins, formatting tools, and more.
-- **Copy & Paste Formatting**: Seamlessly retain styles across content.
-- **Undo/Redo History**: Full control of document changes.
-- **Lists and Checklists**: Support for bullets, numbers, and tasks.
-- **Link Embedding**: Add clickable hyperlinks easily.
-- **Image Uploads**: Inline images with support for captions.
-- **Table Support**: Create and format tables inside the editor.
-- **Margin Controls**: Adjust document layout and padding.
-
-### 🤝 Real-time Collaboration
-
-- **Cursor Tracking**: See collaborators' cursors in real-time.
-- **Presence Awareness**: Know who is viewing or editing.
-- **Live Editing**: All changes sync across all clients instantly.
-
-### 💭 Comments & Threads
-
-- **Inline Comments**: Select text and start discussions.
-- **Mentions**: Tag collaborators in comment threads.
-- **Thread Resolution**: Mark comments as resolved or reopen discussions.
-
-### 🔔 Notifications
-
-- **Real-time Alerts**: Get notified of mentions and edits.
-- **Invite-Based Notifications**: Stay updated on document invites and activity.
-
-### 📑 Document Templates
-
-- **Prebuilt Templates**: Start faster with business letters, resumes, proposals, and more.
-- **Customizable**: Add your own templates and content.
-
-### ⬇️ Export Options
-
-- **PDF Export**
-- **HTML Export**
-- **Plain Text Export**
-- **JSON Export**
-
-### 👥 User & Workspace Management
-
-- **User Profiles**: Personalize your identity and avatar.
-- **Organization Workspaces**: Group documents under shared teams.
-- **Invitations**: Email-based invites for document or workspace access.
-- **Authentication**: Secure login and access control.
-
-### 📱 Responsive Design
-
-- **Fully Responsive UI**: Use it comfortably on desktop, tablet, and mobile.
-- **Dark Mode Support**: Theme support for user comfort.
-
-## 🛠️ Tech Stack & Integrations
-
-- **Next.js 15 (App Router)** – Cutting-edge React framework.
-- **Tiptap Editor** – Headless editor with powerful customization.
-- **Tailwind CSS & Shadcn UI** – Modern UI and component library.
-- **Realtime Database** – Seamless collaborative editing.
-- **Authentication** – Secure and scalable auth system.
-
-## 🏁 Why GoogleDocs Clone?
-
-This clone isn't just a demo — it's a foundation for building the next generation of collaborative editing platforms. With robust features, modern design, and a powerful stack, it provides a reliable starting point for developers, startups, and teams seeking to deliver seamless content collaboration.
+Draftly is a premium, real-time collaborative document workspace designed for modern productive teams. Built with a focus on speed, nested organization, and seamless co-authoring, it offers a clean, distraction-free environment to write, comment, snap version history, and manage shared organization spaces.
 
 ---
 
-🌟 **Start collaborating smarter — Experience the GoogleDocs Clone now!**
+## ✨ Features
+
+### 🤝 Real-Time Collaboration & Presence
+*   **Live Co-Authoring**: Write together simultaneously with absolute consistency and near-zero latency.
+*   **Presence Awareness**: Watch team members' blinking cursors, text selections, and user labels in real-time.
+*   **Distraction-Free Typing**: Clean page aesthetics with no intrusive text underlines or co-author writing highlights.
+
+### 📜 Auto-Save Version History & Time Travel
+*   **Background Snaps**: Edits are captured automatically in the background, debounced after 10 seconds of inactivity (rate-limited to once a minute).
+*   **Time-Travel Previews**: Open the Version History panel to view past revisions in read-only preview mode.
+*   **One-Click Restore**: Restore any past document snapshot collaboratively for the entire workspace.
+
+### 🗂️ Nested Doc Tabs
+*   **Structured Organization**: Create sub-documents and nested files directly inside the left panel.
+*   **Instant Switcher**: Swap between child documentation tabs without leaving the page.
+
+### 💭 Comments, Threads, & Notifications
+*   **Inline Discussions**: Select any text range to start comment threads or tag colleagues.
+*   **Resolution Triggers**: Mark discussions as resolved or reopen them when needed.
+*   **In-App Inbox Alerts**: Access the notification bell on your main dashboard to track shared document alerts.
+
+### 🏢 Workspaces & Organization Switcher
+*   **Clerk Organization Management**: Partition documents under personal lists or client/team organizations.
+*   **Seamless Switching**: Swap directories dynamically from your dashboard.
+
+### 📑 Templates & Export Utilities
+*   **Formatting Templates**: Start writing faster with resumes, proposals, cover letters, and standard briefs.
+*   **Multi-Format Export**: Download documents instantly as **PDF (via Print)**, **HTML**, **JSON**, or **Plain Text**.
+
+---
+
+## 🛠️ Tech Stack & Architecture
+
+*   **Next.js 15 (App Router)**: Framework powering pages, layouts, routing, and dynamic server-rendered pages.
+*   **Convex**: Reactive backend database feeding real-time updates directly to clients over active WebSockets.
+*   **Liveblocks**: Collaborative infrastructure powering Y.js synced text states, cursors, comments, and alerts.
+*   **Clerk**: Handles user authentication, organizations, and security directory integration.
+*   **Tiptap Editor**: Headless rich text engine customized with resizable tables, image handling, smart chips, and margins.
+*   **Tailwind CSS & Shadcn UI**: Styling and accessible Radix UI component library.
+
+---
+
+## 🚀 Getting Started
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/PiyushY111/Draftly.git
+cd Draftly
+```
+
+### 2. Install dependencies
+```bash
+npm install
+```
+
+### 3. Set up Environment Variables
+Create a `.env.local` file in the root directory:
+```env
+# Clerk Authentication
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+CLERK_SECRET_KEY=your_clerk_secret_key
+
+# Convex Database
+NEXT_PUBLIC_CONVEX_URL=your_convex_deployment_url
+
+# Liveblocks Collaboration
+NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY=your_liveblocks_public_key
+LIVEBLOCKS_SECRET_KEY=your_liveblocks_secret_key
+```
+
+### 4. Run Development Servers
+Start the Convex database listener:
+```bash
+npx convex dev
+```
+
+In a separate terminal, start the Next.js local development server:
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) to view your workspace.
