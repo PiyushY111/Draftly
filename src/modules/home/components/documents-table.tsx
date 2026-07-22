@@ -94,13 +94,14 @@ export function DocumentsTable() {
                     <TableRow className="border-none hover:bg-transparent">
                         <TableHead className="w-[30px]">&nbsp;</TableHead>
                         <TableHead className="w-[50px]">&nbsp;</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead className="hidden md:table-cell">
-                            Shared
+                        <TableHead className="font-semibold text-slate-800">Name</TableHead>
+                        <TableHead className="hidden md:table-cell font-semibold text-slate-800">
+                            Owner
                         </TableHead>
-                        <TableHead className="hidden md:table-cell">
-                            Create at
+                        <TableHead className="hidden md:table-cell font-semibold text-slate-800">
+                            Created at
                         </TableHead>
+                        <TableHead className="w-[50px] text-right">&nbsp;</TableHead>
                     </TableRow>
                 </TableHeader>
                 <DocumentsTableContent results={results} status={status} />

@@ -81,28 +81,46 @@ export const DocumentRow = ({ document }: Props) => {
                     />
                 </button>
             </TableCell>
-            <TableCell className="w-[50px] pr-0">
-                <FileText className="text-blue-500 size-6" />
-            </TableCell>
             <TableCell className="font-medium md:w-[45%]">
-                {document.title}
+                <div className="flex items-center gap-3">
+                    <FileText className="text-blue-500 size-5 shrink-0" />
+                    <span className="truncate">{document.title}</span>
+                </div>
             </TableCell>
-            <TableCell className="text-muted-foreground [&_svg]:text-muted-foreground hidden items-center gap-2 md:flex [&_svg]:size-4">
-                {document.organizationId ? <Building2 /> : <CircleUser />}
-                {document.organizationId ? "Organization" : "Personal"}
+            <TableCell className="text-muted-foreground hidden md:table-cell">
+                <div className="flex items-center gap-2 [&_svg]:size-4 [&_svg]:text-muted-foreground">
+                    {userId === document.ownerId ? (
+                        <>
+                           <CircleUser className="size-4 text-slate-400" />
+                           <span className="text-slate-700">me</span>
+                        </>
+                    ) : document.organizationId ? (
+                        <>
+                           <Building2 className="size-4 text-slate-400" />
+                           <span className="text-slate-700">Organization</span>
+                        </>
+                    ) : (
+                        <>
+                           <CircleUser className="size-4 text-blue-500" />
+                           <span className="text-blue-600 font-semibold bg-blue-50/50 px-2 py-0.5 rounded border border-blue-100/50">Shared</span>
+                        </>
+                    )}
+                </div>
             </TableCell>
             <TableCell className="text-muted-foreground hidden md:table-cell">
                 {format(document._creationTime, "MMM d, yyyy")}
             </TableCell>
             <TableCell
-                className="flex justify-end"
+                className="w-[50px] text-right"
                 onClick={(e) => e.stopPropagation()}
             >
-                <DocumentMenu
-                    id={document._id}
-                    title={document.title}
-                    canRemove={canRemove}
-                />
+                <div className="flex justify-end">
+                    <DocumentMenu
+                        id={document._id}
+                        title={document.title}
+                        canRemove={canRemove}
+                    />
+                </div>
             </TableCell>
         </TableRow>
     );
