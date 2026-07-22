@@ -18,26 +18,30 @@ export async function POST(request: Request) {
             return new Response("Unauthorized", { status: 401 });
         }
 
-        const { room } = await request.json();
-        const baseDocumentId = room.split("-tab-")[0];
-        const document = await convex.query(api.documents.get, { id: baseDocumentId });
+        const body = await request.json().catch(() => ({}));
+        const room = body?.room;
 
-        if (!document) {
-            return new Response("Not found", { status: 404 });
-        }
+        if (room) {
+            const baseDocumentId = room.split("-tab-")[0];
+            const document = await convex.query(api.documents.get, { id: baseDocumentId });
 
-        const isOwner = document.ownerId === user.id;
-        const isMember = document.organizationId && sessionClaims.org_id
-            ? document.organizationId === String(sessionClaims.org_id)
-            : false;
-        
-        const userEmails = user.emailAddresses.map((e) => e.emailAddress.toLowerCase());
-        const isShared = document.sharedEmails?.some((email) =>
-            userEmails.includes(email.toLowerCase())
-        );
+            if (!document) {
+                return new Response("Not found", { status: 404 });
+            }
 
-        if (!isOwner && !isMember && !isShared) {
-            return new Response("Unauthorized", { status: 401 });
+            const isOwner = document.ownerId === user.id;
+            const isMember = document.organizationId && sessionClaims.org_id
+                ? document.organizationId === String(sessionClaims.org_id)
+                : false;
+            
+            const userEmails = user.emailAddresses.map((e) => e.emailAddress.toLowerCase());
+            const isShared = document.sharedEmails?.some((email) =>
+                userEmails.includes(email.toLowerCase())
+            );
+
+            if (!isOwner && !isMember && !isShared) {
+                return new Response("Unauthorized", { status: 401 });
+            }
         }
 
         const name =
@@ -50,10 +54,12 @@ export async function POST(request: Request) {
             },
         });
 
-        session.allow(room, session.FULL_ACCESS);
-        const { status, body } = await session.authorize();
+        if (room) {
+            session.allow(room, session.FULL_ACCESS);
+        }
+        const { status, body: authBody } = await session.authorize();
 
-        return new Response(body, { status });
+        return new Response(authBody, { status });
     } catch (error) {
         console.error("[Liveblocks Auth Route Error]:", error);
         return new Response("Internal Server Error", { status: 500 });

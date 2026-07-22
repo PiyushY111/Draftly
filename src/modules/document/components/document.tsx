@@ -17,8 +17,9 @@ export const Document = ({ preloadedDocument }: Props) => {
     const document = usePreloadedQuery(preloadedDocument);
     const [isTabsOpen, setIsTabsOpen] = useState(true);
 
-    const documentTabs = document?.tabs || [
+    const documentTabs = [
         { id: "main", title: "Main Document", roomId: document?._id || "" },
+        ...(document?.tabs || []),
     ];
 
     const [activeTabId, setActiveTabId] = useState(
