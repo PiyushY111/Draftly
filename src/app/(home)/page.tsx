@@ -1,8 +1,7 @@
-import { Dashboard } from "@/modules/home/components/dashboard";
-import { Navbar } from "@/modules/home/components/navbar";
+import { Dashboard } from "@/modules/home/components/dashboard/dashboard";
 import { HomeLiveblocksProvider } from "@/providers/home-liveblocks-provider";
 import { auth } from "@clerk/nextjs/server";
-import { LandingPage } from "@/modules/home/components/landing-page";
+import { LandingPage } from "@/modules/home/components/landing/landing-page";
 
 export const dynamic = "force-dynamic";
 

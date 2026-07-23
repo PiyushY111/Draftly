@@ -1,6 +1,7 @@
 "use client";
+import { Separator } from "@/components/ui";
 
-import { Separator } from "@/components/ui/separator";
+
 import {
     ClientSideSuspense,
     useOthers,

@@ -1,4 +1,4 @@
-import { Document } from "@/modules/document/components/document";
+import { Document } from "@/modules/document/components/layout/document";
 import { getAuthToken } from "@/modules/document/hooks/get-auth-token";
 import { preloadQuery } from "convex/nextjs";
 import { api } from "../../../../convex/_generated/api";

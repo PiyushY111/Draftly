@@ -1,4 +1,6 @@
 "use client";
+import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, Separator } from "@/components/ui";
+
 
 import { InboxNotification, InboxNotificationList } from "@liveblocks/react-ui";
 import {
@@ -6,14 +8,7 @@ import {
     useInboxNotifications,
 } from "@liveblocks/react/suspense";
 
-import { Button } from "@/components/ui/button";
 
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
 import { BellIcon, FileText } from "lucide-react";
 import Link from "next/link";
 

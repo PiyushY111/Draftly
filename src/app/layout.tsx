@@ -1,3 +1,4 @@
+import { Toaster } from "@/components/ui";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 
@@ -5,7 +6,6 @@ import "@liveblocks/react-tiptap/styles.css";
 import "@liveblocks/react-ui/styles.css";
 import "./globals.css";
 
-import { Toaster } from "@/components/ui/sonner";
 import { EditorStoreProvider } from "@/providers/editor-store-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { NuqsAdapter } from "nuqs/adapters/next/app";

@@ -1,19 +1,19 @@
 "use client";
+import { Button, Separator } from "@/components/ui";
 
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+
 import { cn } from "@/lib/utils";
 import { useSections } from "../../hooks/use-section";
-import { AlignButton } from "./align-button";
-import { FontFamilyButton } from "./font-family-button";
-import { FontSizeButton } from "./font-size-button";
-import { HeadingLevelButton } from "./heading-level-button";
-import { HighlightColorButton } from "./highlight-color-button";
-import { ImageButton } from "./image-button";
-import { LineHeightButton } from "./line-height-button";
-import { LinkButton } from "./link-button";
-import { ListButton } from "./list-button";
-import { TextColorButton } from "./text-color-button";
+import { AlignButton } from "./layout/align-button";
+import { FontFamilyButton } from "./text/font-family-button";
+import { FontSizeButton } from "./text/font-size-button";
+import { HeadingLevelButton } from "./text/heading-level-button";
+import { HighlightColorButton } from "./text/highlight-color-button";
+import { ImageButton } from "./insert/image-button";
+import { LineHeightButton } from "./layout/line-height-button";
+import { LinkButton } from "./insert/link-button";
+import { ListButton } from "./layout/list-button";
+import { TextColorButton } from "./text/text-color-button";
 
 export const Toolbar = () => {
     const sections = useSections();

@@ -1,6 +1,7 @@
-"use client"; // Error boundaries must be Client Components
+"use client";
+import { Button } from "@/components/ui";
+ // Error boundaries must be Client Components
 
-import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
