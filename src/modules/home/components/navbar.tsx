@@ -1,6 +1,6 @@
+"use client";
+
 import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
-import Image from "next/image";
-import Link from "next/link";
 import { SearchInput } from "./search-input";
 import { Inbox } from "@/modules/room/components/inbox";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, FilePlus, FolderPlus } from "lucide-react";
+import { Plus, FilePlus, FolderPlus, Bell } from "lucide-react";
 
 type NavbarProps = {
     onCreateDocument?: () => void;
@@ -19,45 +19,31 @@ type NavbarProps = {
 
 export const Navbar = ({ onCreateDocument, onCreateFolder }: NavbarProps) => {
     return (
-        <nav className="flex h-12 w-full items-center justify-between rounded-2xl border border-slate-200/90 bg-white px-5 py-1.5 shadow-sm transition-all">
-            <div className="flex shrink-0 items-center gap-3 pr-3">
-                <Link
-                    href="/"
-                    className="group flex cursor-pointer items-center gap-2"
-                >
-                    <Image
-                        src="/logo.svg"
-                        alt="Logo"
-                        width={28}
-                        height={28}
-                        className="transition-transform group-hover:scale-105"
-                    />
-                    <span className="text-base font-bold tracking-tight text-slate-900">
-                        Docs
-                    </span>
-                </Link>
+        <header className="flex h-14 w-full items-center justify-between gap-4 bg-transparent px-2 py-1">
+            {/* Search Input in Center */}
+            <div className="flex flex-1 items-center max-w-xl">
+                <SearchInput />
             </div>
 
-            <SearchInput />
-
-            <div className="flex items-center gap-3 pl-3">
+            {/* Right Action Controls: + New, Bell Notification, Clerk Auth */}
+            <div className="flex items-center gap-3">
                 {onCreateDocument && (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button
                                 size="sm"
-                                className="h-8 gap-1.5 rounded-xl bg-blue-600 px-3.5 text-xs font-semibold text-white shadow-xs transition-all hover:bg-blue-700 active:scale-95 cursor-pointer"
+                                className="h-9 gap-1.5 rounded-full bg-[#4f46e5] px-4 text-xs font-semibold text-white shadow-xs transition-all hover:bg-indigo-700 active:scale-95 cursor-pointer"
                             >
-                                <Plus className="size-3.5 stroke-[2.5]" />
+                                <Plus className="size-4 stroke-[2.5]" />
                                 <span>New</span>
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuContent align="end" className="w-44 rounded-xl">
                             <DropdownMenuItem
                                 onClick={onCreateDocument}
                                 className="cursor-pointer font-medium text-slate-700"
                             >
-                                <FilePlus className="mr-2 size-4 text-blue-600" />
+                                <FilePlus className="mr-2 size-4 text-indigo-600" />
                                 New Document
                             </DropdownMenuItem>
                             {onCreateFolder && (
@@ -73,10 +59,32 @@ export const Navbar = ({ onCreateDocument, onCreateFolder }: NavbarProps) => {
                     </DropdownMenu>
                 )}
 
-                <Inbox />
-                <OrganizationSwitcher hideSlug />
-                <UserButton />
+                {/* Notification Bell / Inbox */}
+                <div className="flex items-center justify-center">
+                    <Inbox />
+                </div>
+
+                {/* Clerk Organization Switcher & User Button Profile */}
+                <div className="flex items-center gap-2 border-l border-slate-200/80 pl-3">
+                    <OrganizationSwitcher
+                        hideSlug
+                        appearance={{
+                            elements: {
+                                organizationSwitcherTrigger:
+                                    "flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100/80 hover:bg-slate-200/60 px-3 py-1.5 rounded-full transition-colors cursor-pointer",
+                            },
+                        }}
+                    />
+                    <UserButton
+                        afterSignOutUrl="/"
+                        appearance={{
+                            elements: {
+                                avatarBox: "size-8 rounded-full",
+                            },
+                        }}
+                    />
+                </div>
             </div>
-        </nav>
+        </header>
     );
 };

@@ -1,14 +1,11 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useSearchParam } from "@/hooks/use-search-param";
 import { Search, X } from "lucide-react";
 import { useRef } from "react";
 
 export const SearchInput = () => {
     const [search, setSearch] = useSearchParam();
-
     const inputRef = useRef<HTMLInputElement>(null);
 
     const onClear = () => {
@@ -20,38 +17,29 @@ export const SearchInput = () => {
     };
 
     return (
-        <div className="flex flex-1 items-center justify-center max-w-md mx-3">
-            <div className="relative w-full">
-                <Input
-                    ref={inputRef}
-                    className="h-8 w-full rounded-lg border border-slate-200/80 bg-slate-100/70 pl-8 pr-8 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus-within:border-blue-500 focus-within:bg-white focus-within:shadow-xs focus-visible:outline-none focus-visible:ring-0 transition-all"
-                    placeholder="Search documents..."
-                    defaultValue={search}
-                    onChange={(e) => {
-                        setSearch(e.target.value);
-                    }}
-                />
-                <Button
-                    type="submit"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-1/2 left-1.5 -translate-y-1/2 rounded-full size-7 hover:bg-transparent"
+        <div className="relative flex flex-1 items-center max-w-md">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
+            <input
+                ref={inputRef}
+                className="h-10 w-full rounded-full border border-slate-200/80 bg-slate-100/60 pl-10 pr-12 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:shadow-xs focus:outline-none transition-all"
+                placeholder="Search documents..."
+                defaultValue={search}
+                onChange={(e) => setSearch(e.target.value)}
+            />
+            {search ? (
+                <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 hover:bg-slate-200/60 hover:text-slate-600 cursor-pointer"
+                    onClick={onClear}
                 >
-                    <Search className="text-slate-400 size-4" />
-                </Button>
-
-                {search && (
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-1/2 right-1.5 -translate-y-1/2 rounded-full size-7 hover:bg-slate-200/60"
-                        onClick={onClear}
-                    >
-                        <X className="text-slate-500 size-4" />
-                    </Button>
-                )}
-            </div>
+                    <X className="size-3.5" />
+                </button>
+            ) : (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-0.5 rounded-md border border-slate-200/80 bg-white/90 px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 shadow-2xs select-none">
+                    <span>⌘</span>
+                    <span>K</span>
+                </div>
+            )}
         </div>
     );
 };

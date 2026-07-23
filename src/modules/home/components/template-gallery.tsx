@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, ChevronUp, Sparkles } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import {
     Carousel,
     CarouselContent,
@@ -41,34 +41,48 @@ export const TemplateGallery = () => {
     };
 
     return (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-5 shadow-sm transition-all">
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-5 shadow-xs transition-all">
             <Carousel opts={{ align: "start", loop: true }} className="w-full">
-                <div className="mb-3 flex items-center justify-between">
+                <div
+                    className={cn(
+                        "flex items-center justify-between transition-all duration-300",
+                        isExpanded && "mb-4",
+                    )}
+                >
+                    {/* Header Label: START A NEW DOCUMENT */}
                     <div className="flex items-center gap-2">
-                        <span className="size-2 rounded-full bg-blue-600"></span>
-                        <h3 className="text-xs font-semibold tracking-wider text-slate-800 uppercase">
+                        <span className="size-2 rounded-full bg-[#4f46e5]"></span>
+                        <h3 className="text-xs font-bold tracking-wider text-slate-800 uppercase">
                             Start a new document
                         </h3>
                     </div>
+
+                    {/* Right Controls: Carousel arrows + Minimise button */}
                     <div className="flex items-center gap-2">
-                        {isExpanded && (
-                            <div className="flex items-center gap-1 border-r border-slate-200 pr-2">
-                                <CarouselPrevious className="static size-7 translate-y-0 border border-slate-200 bg-slate-100 text-slate-600 transition-all hover:bg-slate-200 hover:text-slate-900 active:scale-95" />
-                                <CarouselNext className="static size-7 translate-y-0 border border-slate-200 bg-slate-100 text-slate-600 transition-all hover:bg-slate-200 hover:text-slate-900 active:scale-95" />
-                            </div>
-                        )}
+                        <AnimatePresence mode="wait">
+                            {isExpanded && (
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.9 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="flex items-center gap-1"
+                                >
+                                    <CarouselPrevious className="static size-7 translate-y-0 cursor-pointer border border-slate-200 bg-slate-50 text-slate-600 transition-all hover:bg-slate-100 hover:text-slate-900 active:scale-95" />
+                                    <CarouselNext className="static size-7 translate-y-0 cursor-pointer border border-slate-200 bg-slate-50 text-slate-600 transition-all hover:bg-slate-100 hover:text-slate-900 active:scale-95" />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                         <button
                             onClick={() => setIsExpanded((prev) => !prev)}
-                            className="flex cursor-pointer items-center gap-1 rounded-lg border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 transition-all duration-150 hover:bg-slate-200/80 hover:text-slate-900 active:scale-95"
+                            className="flex cursor-pointer items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600 transition-all hover:bg-slate-100 hover:text-slate-900 active:scale-95"
                             title={
                                 isExpanded
                                     ? "Minimise templates"
                                     : "Maximise templates"
                             }
                         >
-                            <span className="text-xs">
-                                {isExpanded ? "Minimise" : "Maximise"}
-                            </span>
+                            <span>{isExpanded ? "Minimise" : "Maximise"}</span>
                             {isExpanded ? (
                                 <ChevronUp className="size-3.5" />
                             ) : (
@@ -78,16 +92,22 @@ export const TemplateGallery = () => {
                     </div>
                 </div>
 
+                {/* Animated Minimise/Expand Container with Spring Stiffness */}
                 <AnimatePresence initial={false}>
                     {isExpanded && (
                         <motion.div
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: "auto", opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.25, ease: "easeInOut" }}
+                            transition={{
+                                type: "spring",
+                                stiffness: 300,
+                                damping: 28,
+                                mass: 0.8,
+                            }}
                             className="overflow-hidden"
                         >
-                            <div className="pt-2">
+                            <div className="pt-1">
                                 <CarouselContent className="-ml-3">
                                     {TEMPLATES.map((template) => (
                                         <CarouselItem
@@ -96,16 +116,12 @@ export const TemplateGallery = () => {
                                         >
                                             <div
                                                 className={cn(
-                                                    "group flex flex-col gap-2 transition-all duration-200 active:scale-[0.97]",
+                                                    "group flex flex-col items-center gap-2 transition-all duration-200 active:scale-[0.98]",
                                                     isCreating &&
                                                         "pointer-events-none opacity-50",
                                                 )}
                                             >
                                                 <button
-                                                    style={{
-                                                        backgroundImage: `url(${template.imageUrl})`,
-                                                    }}
-                                                    className="flex aspect-[3/4] w-full cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 bg-cover bg-center bg-no-repeat transition-all duration-200 group-hover:border-blue-600 group-hover:bg-white group-hover:shadow-md"
                                                     disabled={isCreating}
                                                     onClick={() =>
                                                         create(
@@ -113,8 +129,51 @@ export const TemplateGallery = () => {
                                                             template.initialContent,
                                                         )
                                                     }
-                                                />
-                                                <p className="truncate text-center text-xs font-semibold text-slate-700 transition-colors group-hover:text-blue-600">
+                                                    className={cn(
+                                                        "relative flex aspect-[3/4] w-full cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border border-dashed border-slate-300 bg-white shadow-2xs transition-all duration-200 group-hover:border-indigo-500 group-hover:shadow-md",
+                                                        template.id ===
+                                                            "project-proposal" &&
+                                                            "border-indigo-500 ring-2 ring-indigo-500/20",
+                                                    )}
+                                                >
+                                                    {template.id === "blank" ? (
+                                                        /* Google-style Multi-color + Icon for Blank Document */
+                                                        <div className="flex items-center justify-center">
+                                                            <svg
+                                                                width="40"
+                                                                height="40"
+                                                                viewBox="0 0 40 40"
+                                                                fill="none"
+                                                                xmlns="http://www.w3.org/2000/svg"
+                                                            >
+                                                                <path
+                                                                    d="M17.5 4V17.5H4V22.5H17.5V36H22.5V22.5H36V17.5H22.5V4H17.5Z"
+                                                                    fill="#4285F4"
+                                                                />
+                                                                <path
+                                                                    d="M17.5 17.5H4V22.5H17.5V17.5Z"
+                                                                    fill="#EA4335"
+                                                                />
+                                                                <path
+                                                                    d="M22.5 22.5V36H17.5V22.5H22.5Z"
+                                                                    fill="#34A853"
+                                                                />
+                                                                <path
+                                                                    d="M22.5 17.5V4H17.5V17.5H22.5Z"
+                                                                    fill="#FBBC05"
+                                                                />
+                                                            </svg>
+                                                        </div>
+                                                    ) : (
+                                                        <div
+                                                            className="h-full w-full bg-cover bg-center bg-no-repeat transition-transform duration-300 group-hover:scale-105"
+                                                            style={{
+                                                                backgroundImage: `url(${template.imageUrl})`,
+                                                            }}
+                                                        />
+                                                    )}
+                                                </button>
+                                                <p className="truncate text-center text-xs font-semibold text-slate-700 transition-colors group-hover:text-indigo-600">
                                                     {template.label}
                                                 </p>
                                             </div>
