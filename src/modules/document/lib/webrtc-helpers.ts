@@ -16,7 +16,20 @@ export const initializePeerConnection = (
     onIceCandidate: (candidate: RTCIceCandidate) => void,
     onTrack: (stream: MediaStream) => void
 ): RTCPeerConnection => {
-    const pc = new RTCPeerConnection({ iceServers: STUN_SERVERS });
+    const iceServers: RTCIceServer[] = [...STUN_SERVERS];
+    const turnUrl = process.env.NEXT_PUBLIC_TURN_URL;
+    const turnUsername = process.env.NEXT_PUBLIC_TURN_USERNAME;
+    const turnCredential = process.env.NEXT_PUBLIC_TURN_CREDENTIAL;
+
+    if (turnUrl) {
+        iceServers.push({
+            urls: [turnUrl],
+            username: turnUsername,
+            credential: turnCredential,
+        });
+    }
+
+    const pc = new RTCPeerConnection({ iceServers });
 
     if (localStream) {
         localStream.getTracks().forEach((track) => {

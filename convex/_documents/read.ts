@@ -1,6 +1,7 @@
 import { paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import { query } from "../_generated/server";
+import { assertCanViewDocument } from "../_utils/auth";
 
 export type OrganizationId = string | null;
 
@@ -21,34 +22,31 @@ export const list = query({
         const organizationId = user.org_id as OrganizationId;
 
         if (search) {
-            const results = organizationId
+            // Paginate using Convex search index instead of collecting all documents
+            const paginatedResults = organizationId
                 ? await ctx.db
                       .query("documents")
                       .withSearchIndex("by_title", (q) =>
                           q.search("title", search!).eq("organizationId", organizationId),
                       )
-                      .collect()
+                      .paginate(paginationOpts)
                 : await ctx.db
                       .query("documents")
                       .withSearchIndex("by_title", (q) =>
                           q.search("title", search!).eq("ownerId", user.subject),
                       )
-                      .collect();
-            const filtered = results.filter(doc => {
+                      .paginate(paginationOpts);
+
+            // Apply in-memory filters for folderId and onlyStarred to the current page
+            const filteredPage = paginatedResults.page.filter(doc => {
                 if (onlyStarred && !doc.isStarred) return false;
                 if (!onlyStarred && doc.folderId !== folderId) return false;
                 return true;
             });
 
-            const start = paginationOpts.numItems * (parseInt(paginationOpts.cursor || "0") || 0);
-            const paginated = filtered.slice(start, start + paginationOpts.numItems);
-            const hasMore = start + paginationOpts.numItems < filtered.length;
-            const nextCursor = hasMore ? String((parseInt(paginationOpts.cursor || "0") || 0) + 1) : null;
-            
             return {
-                page: paginated,
-                isDone: !hasMore,
-                continueCursor: nextCursor || "",
+                ...paginatedResults,
+                page: filteredPage,
             };
         }
 
@@ -81,11 +79,20 @@ export const list = query({
         if (!onlyStarred && !folderId) {
             const emailToCheck = (userEmail || user.email)?.toLowerCase();
             if (emailToCheck) {
-                const allDocs = await ctx.db.query("documents").collect();
-                const sharedDocs = allDocs.filter(doc => 
-                    doc.ownerId !== user.subject &&
-                    doc.sharedEmails?.map(e => e.toLowerCase()).includes(emailToCheck)
-                );
+                // Relational lookup in the 'shares' table instead of a full documents table scan
+                const shares = await ctx.db
+                    .query("shares")
+                    .withIndex("by_email", (q) => q.eq("email", emailToCheck))
+                    .collect();
+
+                const sharedDocs = [];
+                for (const share of shares) {
+                    const doc = await ctx.db.get(share.documentId);
+                    // Ensure the document exists, user doesn't own it (already in personal list), and it fits root drive layout
+                    if (doc && doc.ownerId !== user.subject && !doc.folderId) {
+                        sharedDocs.push(doc);
+                    }
+                }
                 
                 const merged = [...paginatedResults.page, ...sharedDocs];
                 merged.sort((a, b) => b._creationTime - a._creationTime);
@@ -104,25 +111,39 @@ export const list = query({
 export const get = query({
     args: { id: v.id("documents") },
     handler: async (ctx, { id }) => {
-        const document = await ctx.db.get(id);
-
-        if (!document) {
-            throw new ConvexError("Document not found");
-        }
-
-        return document;
+        // Enforce proper authorization check
+        return await assertCanViewDocument(ctx, id);
     },
 });
 
 export const getByIds = query({
     args: { ids: v.array(v.id("documents")) },
     handler: async (ctx, { ids }) => {
+        const user = await ctx.auth.getUserIdentity();
+        if (!user) {
+            return [];
+        }
+
         const documents = [];
 
         for (const id of ids) {
             const document = await ctx.db.get(id);
             if (document) {
-                documents.push({ id: document._id, name: document.title });
+                // Check authorization per document
+                const isOwner = document.ownerId === user.subject;
+                const isMember = document.organizationId && user.org_id
+                    ? document.organizationId === user.org_id
+                    : false;
+                const userEmail = user.email?.toLowerCase();
+                const isShared = userEmail && document.sharedEmails
+                    ? document.sharedEmails.some((email) => email.toLowerCase() === userEmail)
+                    : false;
+
+                if (isOwner || isMember || isShared) {
+                    documents.push({ id: document._id, name: document.title });
+                } else {
+                    documents.push({ id, name: "[Private]" });
+                }
             } else {
                 documents.push({ id, name: "[Removed]" });
             }

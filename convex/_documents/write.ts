@@ -1,11 +1,8 @@
 import { ConvexError, v } from "convex/values";
 import { mutation } from "../_generated/server";
+import { assertCanEditDocument, assertIsDocumentOwner, assertCanViewFolder } from "../_utils/auth";
 
 export type OrganizationId = string | null;
-export enum Role {
-    Admin = "org:admin",
-    Member = "org:member",
-}
 
 export const create = mutation({
     args: {
@@ -25,6 +22,10 @@ export const create = mutation({
 
         const organizationId = user.org_id as OrganizationId;
 
+        if (folderId) {
+            await assertCanViewFolder(ctx, folderId);
+        }
+
         return await ctx.db.insert("documents", {
             title,
             initialContent,
@@ -38,20 +39,24 @@ export const create = mutation({
 export const remove = mutation({
     args: { id: v.id("documents") },
     handler: async (ctx, { id }) => {
-        const user = await ctx.auth.getUserIdentity();
+        await assertIsDocumentOwner(ctx, id);
 
-        if (!user) {
-            throw new ConvexError("Unauthorized");
+        // Delete any related shares mapping records
+        const shares = await ctx.db
+            .query("shares")
+            .withIndex("by_document_id", (q) => q.eq("documentId", id))
+            .collect();
+        for (const share of shares) {
+            await ctx.db.delete(share._id);
         }
 
-        const document = await ctx.db.get(id);
-
-        if (!document) {
-            throw new ConvexError("Document not found");
-        }
-
-        if (user.subject !== document.ownerId && user.role !== Role.Admin) {
-            throw new ConvexError("Unauthorized");
+        // Delete any related revisions
+        const revisions = await ctx.db
+            .query("revisions")
+            .withIndex("by_document_id", (q) => q.eq("documentId", id))
+            .collect();
+        for (const rev of revisions) {
+            await ctx.db.delete(rev._id);
         }
 
         await ctx.db.delete(id);
@@ -61,24 +66,7 @@ export const remove = mutation({
 export const update = mutation({
     args: { id: v.id("documents"), title: v.optional(v.string()) },
     handler: async (ctx, { id, title }) => {
-        const user = await ctx.auth.getUserIdentity();
-
-        if (!user) {
-            throw new ConvexError("Unauthorized");
-        }
-
-        const document = await ctx.db.get(id);
-
-        if (!document) {
-            throw new ConvexError("Document not found");
-        }
-
-        const { ownerId, organizationId } = document;
-
-        if (ownerId !== user.subject && organizationId !== user.org_id) {
-            throw new ConvexError("Unauthorized");
-        }
-
+        await assertCanEditDocument(ctx, id);
         await ctx.db.patch(id, { title });
     },
 });
@@ -86,16 +74,7 @@ export const update = mutation({
 export const toggleStar = mutation({
     args: { id: v.id("documents") },
     handler: async (ctx, { id }) => {
-        const user = await ctx.auth.getUserIdentity();
-        if (!user) throw new ConvexError("Unauthorized");
-
-        const document = await ctx.db.get(id);
-        if (!document) throw new ConvexError("Document not found");
-
-        if (document.ownerId !== user.subject && document.organizationId !== user.org_id) {
-            throw new ConvexError("Unauthorized");
-        }
-
+        const document = await assertCanEditDocument(ctx, id);
         await ctx.db.patch(id, { isStarred: !document.isStarred });
     },
 });
@@ -103,16 +82,10 @@ export const toggleStar = mutation({
 export const moveToFolder = mutation({
     args: { id: v.id("documents"), folderId: v.optional(v.id("folders")) },
     handler: async (ctx, { id, folderId }) => {
-        const user = await ctx.auth.getUserIdentity();
-        if (!user) throw new ConvexError("Unauthorized");
-
-        const document = await ctx.db.get(id);
-        if (!document) throw new ConvexError("Document not found");
-
-        if (document.ownerId !== user.subject && document.organizationId !== user.org_id) {
-            throw new ConvexError("Unauthorized");
+        await assertCanEditDocument(ctx, id);
+        if (folderId) {
+            await assertCanViewFolder(ctx, folderId);
         }
-
         await ctx.db.patch(id, { folderId });
     },
 });

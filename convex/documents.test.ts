@@ -96,3 +96,61 @@ test("folder deletion cleans up nested contents", async () => {
     await expect(authenticated.query(api.folders.get, { id: subFolderId })).rejects.toThrow();
     await expect(authenticated.query(api.documents.get, { id: docId })).rejects.toThrow();
 });
+
+test("document and folder authorization checks", async () => {
+    const t = convexTest(schema, modules);
+
+    // Mock identities
+    const owner = t.withIdentity({
+        subject: "user_owner",
+        name: "Document Owner",
+        email: "owner@example.com",
+    });
+
+    const otherUser = t.withIdentity({
+        subject: "user_other",
+        name: "Other User",
+        email: "other@example.com",
+    });
+
+    const sharedUser = t.withIdentity({
+        subject: "user_shared",
+        name: "Shared User",
+        email: "shared@example.com",
+    });
+
+    // 1. Owner creates a personal document (no organization)
+    const docId = await owner.mutation(api.documents.create, {
+        title: "Private Owner Doc",
+        initialContent: "Secret info",
+    });
+
+    // 2. Assert owner can read and edit
+    const docForOwner = await owner.query(api.documents.get, { id: docId });
+    expect(docForOwner.title).toBe("Private Owner Doc");
+
+    // 3. Assert other user is rejected for read (C1 fix verification)
+    await expect(otherUser.query(api.documents.get, { id: docId })).rejects.toThrow();
+
+    // 4. Assert other user is rejected for write mutations (C2 fix verification)
+    await expect(otherUser.mutation(api.documents.update, { id: docId, title: "Hacked Title" })).rejects.toThrow();
+    await expect(otherUser.mutation(api.documents.addTab, { id: docId, title: "Hacked Tab", roomId: "room_hack" })).rejects.toThrow();
+    await expect(otherUser.mutation(api.documents.createRevision, { documentId: docId, content: "Hacked Content", title: "hack" })).rejects.toThrow();
+
+    // 5. Owner shares document with sharedUser's email
+    await owner.mutation(api.documents.share, { id: docId, email: "shared@example.com" });
+
+    // 6. Assert sharedUser can now view and edit the document
+    const docForShared = await sharedUser.query(api.documents.get, { id: docId });
+    expect(docForShared.title).toBe("Private Owner Doc");
+
+    await sharedUser.mutation(api.documents.update, { id: docId, title: "Collaborator Edit" });
+    const docAfterEdit = await owner.query(api.documents.get, { id: docId });
+    expect(docAfterEdit.title).toBe("Collaborator Edit");
+
+    // 7. Owner unshares the document
+    await owner.mutation(api.documents.unshare, { id: docId, email: "shared@example.com" });
+
+    // 8. Assert sharedUser is rejected again after unsharing
+    await expect(sharedUser.query(api.documents.get, { id: docId })).rejects.toThrow();
+});

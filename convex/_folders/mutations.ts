@@ -2,6 +2,7 @@ import { ConvexError, v } from "convex/values";
 import { mutation, internalMutation } from "../_generated/server";
 import { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
+import { assertCanEditFolder, assertCanViewFolder } from "../_utils/auth";
 
 export type OrganizationId = string | null;
 
@@ -18,6 +19,10 @@ export const create = mutation({
 
         const organizationId = user.org_id as OrganizationId;
 
+        if (parentFolderId) {
+            await assertCanViewFolder(ctx, parentFolderId);
+        }
+
         return await ctx.db.insert("folders", {
             name,
             parentFolderId,
@@ -30,20 +35,7 @@ export const create = mutation({
 export const rename = mutation({
     args: { id: v.id("folders"), name: v.string() },
     handler: async (ctx, { id, name }) => {
-        const user = await ctx.auth.getUserIdentity();
-        if (!user) {
-            throw new ConvexError("Unauthorized");
-        }
-
-        const folder = await ctx.db.get(id);
-        if (!folder) {
-            throw new ConvexError("Folder not found");
-        }
-
-        if (folder.ownerId !== user.subject) {
-            throw new ConvexError("Unauthorized");
-        }
-
+        await assertCanEditFolder(ctx, id);
         await ctx.db.patch(id, { name });
     },
 });
@@ -51,19 +43,7 @@ export const rename = mutation({
 export const remove = mutation({
     args: { id: v.id("folders") },
     handler: async (ctx, { id }) => {
-        const user = await ctx.auth.getUserIdentity();
-        if (!user) {
-            throw new ConvexError("Unauthorized");
-        }
-
-        const folder = await ctx.db.get(id);
-        if (!folder) {
-            throw new ConvexError("Folder not found");
-        }
-
-        if (folder.ownerId !== user.subject) {
-            throw new ConvexError("Unauthorized");
-        }
+        await assertCanEditFolder(ctx, id);
 
         // Delete the parent folder instantly so it disappears from UI
         await ctx.db.delete(id);
@@ -94,6 +74,24 @@ export const deleteFolderContentsBatch = internalMutation({
 
         if (docs.length > 0) {
             for (const doc of docs) {
+                // Delete related shares
+                const shares = await ctx.db
+                    .query("shares")
+                    .withIndex("by_document_id", (q) => q.eq("documentId", doc._id))
+                    .collect();
+                for (const share of shares) {
+                    await ctx.db.delete(share._id);
+                }
+
+                // Delete related revisions
+                const revisions = await ctx.db
+                    .query("revisions")
+                    .withIndex("by_document_id", (q) => q.eq("documentId", doc._id))
+                    .collect();
+                for (const rev of revisions) {
+                    await ctx.db.delete(rev._id);
+                }
+
                 await ctx.db.delete(doc._id);
             }
             await ctx.scheduler.runAfter(0, internal.folders.deleteFolderContentsBatch, {

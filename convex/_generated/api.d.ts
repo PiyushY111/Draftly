@@ -15,8 +15,10 @@ import type * as _documents_tabs from "../_documents/tabs.js";
 import type * as _documents_write from "../_documents/write.js";
 import type * as _folders_mutations from "../_folders/mutations.js";
 import type * as _folders_queries from "../_folders/queries.js";
+import type * as _utils_auth from "../_utils/auth.js";
 import type * as documents from "../documents.js";
 import type * as folders from "../folders.js";
+import type * as migrations from "../migrations.js";
 
 import type {
   ApiFromModules,
@@ -32,8 +34,10 @@ declare const fullApi: ApiFromModules<{
   "_documents/write": typeof _documents_write;
   "_folders/mutations": typeof _folders_mutations;
   "_folders/queries": typeof _folders_queries;
+  "_utils/auth": typeof _utils_auth;
   documents: typeof documents;
   folders: typeof folders;
+  migrations: typeof migrations;
 }>;
 
 /**

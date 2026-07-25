@@ -26,9 +26,5 @@ export default async function DocumentPage({ params }: Props) {
         { token },
     );
 
-    if (!preloadedDocument) {
-        throw new Error("Document not found");
-    }
-
     return <Document preloadedDocument={preloadedDocument} />;
 }

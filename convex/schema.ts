@@ -48,4 +48,11 @@ export default defineSchema({
         createdAt: v.number(),
     })
         .index("by_document_id", ["documentId"]),
+
+    shares: defineTable({
+        documentId: v.id("documents"),
+        email: v.string(),
+    })
+        .index("by_email", ["email"])
+        .index("by_document_id", ["documentId"]),
 });

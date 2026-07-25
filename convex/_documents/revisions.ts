@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "../_generated/server";
+import { assertCanEditDocument, assertCanViewDocument } from "../_utils/auth";
 
 export const createRevision = mutation({
     args: { documentId: v.id("documents"), content: v.string(), title: v.string() },
@@ -7,12 +8,7 @@ export const createRevision = mutation({
         const user = await ctx.auth.getUserIdentity();
         if (!user) throw new ConvexError("Unauthorized");
 
-        const document = await ctx.db.get(documentId);
-        if (!document) throw new ConvexError("Document not found");
-
-        if (document.ownerId !== user.subject && document.organizationId !== user.org_id) {
-            throw new ConvexError("Unauthorized");
-        }
+        await assertCanEditDocument(ctx, documentId);
 
         return await ctx.db.insert("revisions", {
             documentId,
@@ -28,13 +24,9 @@ export const createRevision = mutation({
 export const getRevisions = query({
     args: { documentId: v.id("documents") },
     handler: async (ctx, { documentId }) => {
-        const user = await ctx.auth.getUserIdentity();
-        if (!user) return [];
-
-        const document = await ctx.db.get(documentId);
-        if (!document) return [];
-
-        if (document.ownerId !== user.subject && document.organizationId !== user.org_id) {
+        try {
+            await assertCanViewDocument(ctx, documentId);
+        } catch {
             return [];
         }
 
@@ -49,15 +41,7 @@ export const getRevisions = query({
 export const restoreRevision = mutation({
     args: { documentId: v.id("documents"), revisionId: v.id("revisions") },
     handler: async (ctx, { documentId, revisionId }) => {
-        const user = await ctx.auth.getUserIdentity();
-        if (!user) throw new ConvexError("Unauthorized");
-
-        const document = await ctx.db.get(documentId);
-        if (!document) throw new ConvexError("Document not found");
-
-        if (document.ownerId !== user.subject && document.organizationId !== user.org_id) {
-            throw new ConvexError("Unauthorized");
-        }
+        await assertCanEditDocument(ctx, documentId);
 
         const revision = await ctx.db.get(revisionId);
         if (!revision || revision.documentId !== documentId) {

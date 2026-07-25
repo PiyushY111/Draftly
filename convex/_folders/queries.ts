@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { query } from "../_generated/server";
+import { assertCanViewFolder } from "../_utils/auth";
 
 export type OrganizationId = string | null;
 
@@ -39,10 +40,6 @@ export const get = query({
     args: { id: v.optional(v.id("folders")) },
     handler: async (ctx, { id }) => {
         if (!id) return null;
-        const folder = await ctx.db.get(id);
-        if (!folder) {
-            throw new ConvexError("Folder not found");
-        }
-        return folder;
+        return await assertCanViewFolder(ctx, id);
     },
 });

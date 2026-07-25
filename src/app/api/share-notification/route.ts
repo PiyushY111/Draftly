@@ -1,22 +1,65 @@
 import { liveblocks } from "@/lib/liveblocks";
-import { clerkClient } from "@clerk/nextjs/server";
+import { getAuthToken } from "@/modules/document/hooks/get-auth-token";
+import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "../../../../convex/_generated/api";
 
 export async function POST(request: Request) {
     try {
-        const { recipientEmail, docTitle, docUrl, ownerName, baseDocumentId } = await request.json();
+        const { recipientEmail, baseDocumentId } = await request.json();
 
-        if (!recipientEmail || !docTitle || !docUrl || !ownerName || !baseDocumentId) {
+        if (!recipientEmail || !baseDocumentId) {
             return new Response("Missing required fields", { status: 400 });
         }
 
-        const client = await clerkClient();
-        const users = await client.users.getUserList({
-            emailAddress: [recipientEmail],
+        const { userId } = await auth();
+        if (!userId) {
+            return new Response("Unauthorized", { status: 401 });
+        }
+
+        const user = await currentUser();
+        if (!user) {
+            return new Response("Unauthorized", { status: 401 });
+        }
+
+        const token = await getAuthToken();
+        const client = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+        if (token) {
+            client.setAuth(token);
+        }
+
+        const document = await client.query(api.documents.get, { id: baseDocumentId });
+        if (!document) {
+            return new Response("Document not found", { status: 404 });
+        }
+
+        if (document.ownerId !== userId) {
+            return new Response("Forbidden", { status: 403 });
+        }
+
+        const normalizedRecipientEmail = recipientEmail.trim().toLowerCase();
+        const isShared = document.sharedEmails?.some(
+            (email) => email.toLowerCase() === normalizedRecipientEmail
+        );
+        if (!isShared) {
+            return new Response("Recipient is not a collaborator on this document", { status: 400 });
+        }
+
+        const clerk = await clerkClient();
+        const users = await clerk.users.getUserList({
+            emailAddress: [normalizedRecipientEmail],
         });
 
         const targetUser = users.data[0];
         if (targetUser) {
             console.log(`[Share Notification] Triggering Liveblocks notification for user: ${targetUser.id}`);
+            
+            const docTitle = document.title;
+            const ownerName = user.fullName || user.emailAddresses[0]?.emailAddress || "Someone";
+            
+            const origin = request.headers.get("origin") || "http://localhost:3000";
+            const docUrl = `${origin}/documents/${document._id}`;
+
             await liveblocks.triggerInboxNotification({
                 userId: targetUser.id,
                 kind: "$documentShared",
